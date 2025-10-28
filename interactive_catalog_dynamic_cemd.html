@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>CEMD — Interactive Catalog (Dynamic CSV)</title>
 <style>
-  :root {
-    --bg:#29264B;      /* Deep Space */
-    --card:#1d1b36;
-    --muted:#C9C7D9;
-    --text:#F3F2F8;
-    --accent:#F2692A;  /* Naranja */
-    --border:#3A365F;
-  }
+:root {
+  --bg:#e7f4f7;      /* Light Azure */
+  --card:#1d1b36;
+  --muted:#C9C7D9;
+  --text:#F3F2F8;
+  --accent:#F2692A;  /* Naranja */
+  --border:#3A365F;
+}
   html,body{background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Noto Sans,Ubuntu,Cantarell,Helvetica,Arial; margin:0; padding:0;}
   .container{max-width:1200px;margin:24px auto;padding:0 16px;}
   .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.25);margin-top:16px;}
@@ -47,14 +47,7 @@
 </head>
 <body>
 <div class="container">
-  <div class="panel">
-    <div class="row">
-      <h1 style="margin:0;font-size:1.2rem;">CEMD — Interactive Catalog (Dynamic CSV)</h1>
-      <span class="mono" id="metaKpi"></span>
-    </div>
-    <div class="mono" id="colmapPreview"></div>
-    <div id="errorBox" class="error"></div>
-  </div>
+
 
   <div class="panel">
     <div class="controls">
@@ -123,7 +116,7 @@
 (function() {
   const CSV_URL = 'list_local_clean.csv'; // keep CSV next to this HTML
   const $ = (id) => document.getElementById(id);
-  const errorBox = $('errorBox');
+  const errorBox = document.getElementById('errorBox');
 
   const state = {
     data: [],
@@ -139,11 +132,13 @@
     present: ['present in market','present_in_market','in market','in_market','present']
   };
 
-  function showError(e) {
+function showError(e) {
+  console.error(e);
+  if (errorBox) {
     errorBox.style.display = 'block';
     errorBox.textContent = 'Error: ' + (e && e.message ? e.message : e);
-    console.error(e);
   }
+}
 
   function uniq(arr) { return Array.from(new Set(arr.filter(v => v !== null && v !== undefined && String(v).trim() !== ''))); }
   function setOptions(select, values, withAll=false) {
@@ -195,7 +190,8 @@
     state.colmap.product_type = find('product_type');
     state.colmap.grade_level = find('grade_level');
     state.colmap.present = find('present');
-    $('colmapPreview').textContent = 'Detected → ' + JSON.stringify(state.colmap);
+    const cmp = document.getElementById('colmapPreview');
+	if (cmp) cmp.textContent = 'Detected → ' + JSON.stringify(state.colmap);
   }
 
   function renderSelectors() {
@@ -267,7 +263,12 @@
       }
       return true;
     });
-
+function formatCell(val) {
+  const b = coerceBoolish(val);
+  if (b === true) return '•';     // dot for TRUE
+  if (b === false || val == null) return '';  // blank for FALSE/NULL
+  return String(val);
+}
     // Render table
     tableHead.innerHTML = '';
     tableBody.innerHTML = '';
@@ -282,8 +283,8 @@
         for (const c of cols) {
           const td = document.createElement('td');
           let v = r[c];
-          if (typeof v === 'string') v = v.trim(); // tidy spaces (e.g., Publisher/Developer)
-          td.textContent = (v === null || v === undefined) ? '' : String(v);
+          if (typeof v === 'string') v = v.trim();
+          td.textContent = formatCell(v);;
           tr.appendChild(td);
         }
         frag.appendChild(tr);
@@ -341,7 +342,8 @@
   function init(data, cols) {
     state.data = data;
     state.cols = cols;
-    $('metaKpi').textContent = `${data.length} rows • ${cols.length} columns`;
+    const meta = document.getElementById('metaKpi');
+	if (meta) meta.textContent = `${data.length} rows • ${cols.length} columns`
     detectColumns(cols);
     renderSelectors();
     wireEvents();
