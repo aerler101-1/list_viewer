@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CEMD — Interactive Catalog (Dynamic CSV)</title>
+<style>
+  :root {
+    --bg:#29264B;      /* Deep Space */
+    --card:#1d1b36;
+    --muted:#C9C7D9;
+    --text:#F3F2F8;
+    --accent:#F2692A;  /* Naranja */
+    --border:#3A365F;
+  }
+  html,body{background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Noto Sans,Ubuntu,Cantarell,Helvetica,Arial; margin:0; padding:0;}
+  .container{max-width:1200px;margin:24px auto;padding:0 16px;}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.25);margin-top:16px;}
+  .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:end;}
+  .control{grid-column:span 12;}
+  @media(min-width:640px){
+    .control.sm-4{grid-column:span 4;}
+    .control.sm-3{grid-column:span 3;}
+    .control.sm-2{grid-column:span 2;}
+    .control.sm-6{grid-column:span 6;}
+    .control.sm-12{grid-column:span 12;}
+  }
+  label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px;}
+  .hint{display:block;font-size:.8rem;color:var(--muted);margin-top:6px;}
+  select,input[type="search"]{width:100%;background:#221f41;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 10px;outline:none;}
+  select[multiple]{height:160px;}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;}
+  button{background:var(--accent);color:#240E05;border:none;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;}
+  button.secondary{background:transparent;color:var(--text);border:1px solid var(--border);}
+  .kpi{display:flex;gap:16px;flex-wrap:wrap;color:#ffd8c7;font-weight:600;font-size:.95rem;}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace; font-size:.85rem; background:#221f41; border:1px solid var(--border); padding:4px 8px; border-radius:8px;}
+  table{width:100%;border-collapse:collapse;margin-top:12px;}
+  thead th{position:sticky;top:0;background:#221f41;border-bottom:1px solid var(--border);text-align:left;padding:8px;font-size:.9rem;}
+  tbody td{border-bottom:1px solid var(--border);padding:8px;vertical-align:top;font-size:.9rem;}
+  .table-wrap{max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:12px;}
+  .error{white-space:pre-wrap;color:#fecaca;background:#45120a;border:1px solid #8f2b10;padding:10px;border-radius:10px;display:none;}
+  .brand-sticky{position:fixed; right:16px; bottom:16px; opacity:0.9; z-index:9999;}
+  .brand-sticky img{max-width:160px; height:auto; filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));}
+  a, a:visited{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="panel">
+    <div class="row">
+      <h1 style="margin:0;font-size:1.2rem;">CEMD — Interactive Catalog (Dynamic CSV)</h1>
+      <span class="mono" id="metaKpi"></span>
+    </div>
+    <div class="mono" id="colmapPreview"></div>
+    <div id="errorBox" class="error"></div>
+  </div>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="control sm-4">
+        <label>Product</label>
+        <select id="productSelect" multiple></select>
+        <span class="hint">Tip: Hold <strong>Shift</strong> to select a range; <strong>Ctrl/Cmd</strong> to toggle single items. Choose <em>(All)</em> to include every product.</span>
+      </div>
+      <div class="control sm-3">
+        <label>Product Type</label>
+        <select id="ptypeSelect">
+          <option value="__ALL__">(All)</option>
+        </select>
+      </div>
+      <div class="control sm-3">
+        <label>Grade Level</label>
+        <select id="glevelSelect">
+          <option value="__ALL__">(All)</option>
+        </select>
+      </div>
+      <div class="control sm-2">
+        <label>Present in Market</label>
+        <select id="presentSelect">
+          <option value="">Any</option>
+          <option value="true">True</option>
+          <option value="false">False</option>
+          <option value="null">Null/Blank</option>
+        </select>
+      </div>
+      <div class="control sm-12">
+        <label>Columns to Display</label>
+        <select id="columnsSelect" multiple></select>
+        <span class="hint">Hold <strong>Shift</strong> for ranges; <strong>Ctrl/Cmd</strong> to add/remove individual items.</span>
+      </div>
+      <div class="control sm-12 btns">
+        <button id="resetBtn" class="secondary">Reset Filters</button>
+        <button id="downloadBtn">Download filtered CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="kpi">
+      <div>Total rows: <span id="totalCount"></span></div>
+      <div>Shown: <span id="shownCount"></span></div>
+    </div>
+    <div class="table-wrap">
+      <table id="resultsTable">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div><strong>Hosting tips</strong></div>
+    <ol>
+      <li><strong>Glitch</strong> (super quick): New Project → Static Site → add <code>index.html</code> + <code>list_local_clean.csv</code>. Share the live URL.</li>
+      <li><strong>GitHub Pages</strong>: repo → push both files → Settings → Pages → Deploy from <em>main</em> root. URL like <code>https://yourname.github.io/repo/</code>.</li>
+      <li><strong>Netlify</strong> / <strong>Cloudflare Pages</strong>: drag‑and‑drop the folder with both files. Free subdomain.</li>
+    </ol>
+    <p>Requirement: the CSV must live <em>next to</em> this HTML so <code>fetch()</code> can read it. If testing locally, run: <code>python -m http.server 8000</code> → open <a href="http://localhost:8000">http://localhost:8000</a>.</p>
+  </div>
+</div>
+
+<div class="brand-sticky">
+  <img src="cemd_logo.png" alt="CEMD logo" />
+</div>
+
+<!-- Papa Parse from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<script>
+(function() {
+  const CSV_URL = 'list_local_clean.csv'; // keep CSV next to this HTML
+  const $ = (id) => document.getElementById(id);
+  const errorBox = $('errorBox');
+
+  const state = {
+    data: [],
+    cols: [],
+    colmap: { product:null, product_type:null, grade_level:null, present:null }
+  };
+
+  // Candidate names (normalized, lower-case)
+  const CANDIDATES = {
+    product: ['product','product name','program','series','title','name'],
+    product_type: ['product type','grade band','grade_band','gradeband','type'],
+    grade_level: ['grade level','grade_level','grade', 'grades_served', 'grades'],
+    present: ['present in market','present_in_market','in market','in_market','present']
+  };
+
+  function showError(e) {
+    errorBox.style.display = 'block';
+    errorBox.textContent = 'Error: ' + (e && e.message ? e.message : e);
+    console.error(e);
+  }
+
+  function uniq(arr) { return Array.from(new Set(arr.filter(v => v !== null && v !== undefined && String(v).trim() !== ''))); }
+  function setOptions(select, values, withAll=false) {
+    select.innerHTML = '';
+    if (withAll) {
+      const opt = document.createElement('option');
+      opt.value = '__ALL__'; opt.textContent = '(All)';
+      select.appendChild(opt);
+    }
+    values.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = String(v);
+      opt.textContent = String(v);
+      select.appendChild(opt);
+    });
+  }
+  function getMultiValues(select) { return Array.from(select.selectedOptions).map(o => o.value); }
+  function coerceBoolish(v) {
+    if (v === null || v === undefined) return null;
+    if (typeof v === 'boolean') return v;
+    const s = String(v).trim().toLowerCase();
+    if (['true','t','yes','y','1'].includes(s)) return true;
+    if (['false','f','no','n','0'].includes(s)) return false;
+    return null;
+  }
+
+  function normalizeHeader(h) {
+    return String(h || '').replace(/\s+/g,' ').trim();
+  }
+
+  function detectColumns(cols) {
+    const lc = cols.map(c => c.toLowerCase());
+    function find(kind) {
+      for (const cand of CANDIDATES[kind]) {
+        const idx = lc.indexOf(cand);
+        if (idx !== -1) return cols[idx];
+      }
+      // heuristic
+      for (const c of cols) {
+        const s = c.toLowerCase();
+        if (kind === 'product' && ['product','program','series','title','name'].some(k=>s.includes(k))) return c;
+        if (kind === 'product_type' && (s.includes('product') && s.includes('type') || s.includes('grade band'))) return c;
+        if (kind === 'grade_level' && (s.includes('grade') || s === 'grades')) return c;
+        if (kind === 'present' && (s.includes('present') || s.includes('in market'))) return c;
+      }
+      return null;
+    }
+    state.colmap.product = find('product');
+    state.colmap.product_type = find('product_type');
+    state.colmap.grade_level = find('grade_level');
+    state.colmap.present = find('present');
+    $('colmapPreview').textContent = 'Detected → ' + JSON.stringify(state.colmap);
+  }
+
+  function renderSelectors() {
+    const productSelect = $('productSelect');
+    const ptypeSelect = $('ptypeSelect');
+    const glevelSelect = $('glevelSelect');
+    const columnsSelect = $('columnsSelect');
+
+    const productCol = state.colmap.product || state.cols[0];
+    const typeCol = state.colmap.product_type;
+    const gradeCol = state.colmap.grade_level;
+
+    const products = productCol ? uniq(state.data.map(r => r[productCol])) : [];
+    // Inject "(All)" at top for multi-select list
+    productSelect.innerHTML = '';
+    const allOpt = document.createElement('option'); allOpt.textContent='(All)'; allOpt.value='(All)';
+    productSelect.appendChild(allOpt);
+    products.forEach(v => { const opt=document.createElement('option'); opt.value=String(v); opt.textContent=String(v); productSelect.appendChild(opt); });
+
+    const types = typeCol ? uniq(state.data.map(r => r[typeCol])) : [];
+    setOptions(ptypeSelect, types, true);
+
+    const grades = gradeCol ? uniq(state.data.map(r => r[gradeCol])) : [];
+    setOptions(glevelSelect, grades, true);
+
+    setOptions(columnsSelect, state.cols, false);
+    const defaults = [productCol, typeCol, gradeCol, state.colmap.present].filter(Boolean);
+    const extras = state.cols.filter(c => !defaults.includes(c)).slice(0,4);
+    const initial = Array.from(new Set([...defaults, ...extras]));
+    for (const opt of columnsSelect.options) { if (initial.includes(opt.value)) opt.selected = true; }
+  }
+
+  function applyFilters() {
+    const productCol = state.colmap.product || state.cols[0];
+    const typeCol = state.colmap.product_type;
+    const gradeCol = state.colmap.grade_level;
+    const presentCol = state.colmap.present;
+
+    const productSelect = $('productSelect');
+    const ptypeSelect = $('ptypeSelect');
+    const glevelSelect = $('glevelSelect');
+    const presentSelect = $('presentSelect');
+    const columnsSelect = $('columnsSelect');
+    const tableHead = $('tableHead');
+    const tableBody = $('tableBody');
+
+    const chosenProducts = getMultiValues(productSelect);
+    const productAllSelected = chosenProducts.includes('(All)') || chosenProducts.length === 0;
+    const chosenType = ptypeSelect.value || '__ALL__';
+    const chosenGrade = glevelSelect.value || '__ALL__';
+    const presentVal = presentSelect.value || '';
+    const cols = getMultiValues(columnsSelect);
+
+    let rows = state.data.filter(r => {
+      if (productCol && !productAllSelected) {
+        if (!chosenProducts.includes(String(r[productCol]))) return false;
+      }
+      if (typeCol && chosenType !== '__ALL__') {
+        if (String(r[typeCol]) !== String(chosenType)) return false;
+      }
+      if (gradeCol && chosenGrade !== '__ALL__') {
+        if (String(r[gradeCol]) !== String(chosenGrade)) return false;
+      }
+      if (presentCol && presentVal) {
+        const v = coerceBoolish(r[presentCol]);
+        if (presentVal === 'true' && v !== true) return false;
+        if (presentVal === 'false' && v !== false) return false;
+        if (presentVal === 'null' && v !== null) return false;
+      }
+      return true;
+    });
+
+    // Render table
+    tableHead.innerHTML = '';
+    tableBody.innerHTML = '';
+    if (cols.length) {
+      const trh = document.createElement('tr');
+      cols.forEach(c => { const th = document.createElement('th'); th.textContent = c; trh.appendChild(th); });
+      tableHead.appendChild(trh);
+
+      const frag = document.createDocumentFragment();
+      for (const r of rows) {
+        const tr = document.createElement('tr');
+        for (const c of cols) {
+          const td = document.createElement('td');
+          let v = r[c];
+          if (typeof v === 'string') v = v.trim(); // tidy spaces (e.g., Publisher/Developer)
+          td.textContent = (v === null || v === undefined) ? '' : String(v);
+          tr.appendChild(td);
+        }
+        frag.appendChild(tr);
+      }
+      tableBody.appendChild(frag);
+    }
+    $('shownCount').textContent = rows.length;
+    return rows;
+  }
+
+  function toCSV(rows, columns) {
+    const esc = (s) => {
+      if (s === null || s === undefined) return '';
+      const str = String(s);
+      return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+    };
+    const header = columns.map(esc).join(',');
+    const body = rows.map(r => columns.map(c => esc(r[c])).join(',')).join('\n');
+    return header + '\n' + body;
+  }
+
+  function wireEvents() {
+    $('productSelect').addEventListener('change', applyFilters);
+    $('ptypeSelect').addEventListener('change', applyFilters);
+    $('glevelSelect').addEventListener('change', applyFilters);
+    $('presentSelect').addEventListener('change', applyFilters);
+    $('columnsSelect').addEventListener('change', applyFilters);
+
+    $('resetBtn').addEventListener('click', () => {
+      $('productSelect').selectedIndex = -1; // clears selection (treated as All)
+      $('ptypeSelect').value = '__ALL__';
+      $('glevelSelect').value = '__ALL__';
+      $('presentSelect').value = '';
+      const columnsSelect = $('columnsSelect');
+      const productCol = state.colmap.product || state.cols[0];
+      const defaults = [productCol, state.colmap.product_type, state.colmap.grade_level, state.colmap.present].filter(Boolean);
+      const extras = state.cols.filter(c => !defaults.includes(c)).slice(0,4);
+      const initial = Array.from(new Set([...defaults, ...extras]));
+      for (const opt of columnsSelect.options) opt.selected = initial.includes(opt.value);
+      applyFilters();
+    });
+
+    $('downloadBtn').addEventListener('click', () => {
+      const cols = getMultiValues($('columnsSelect'));
+      const filtered = applyFilters() || [];
+      const csv = toCSV(filtered, cols);
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'filtered_export.csv';
+      document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+    });
+  }
+
+  function init(data, cols) {
+    state.data = data;
+    state.cols = cols;
+    $('metaKpi').textContent = `${data.length} rows • ${cols.length} columns`;
+    detectColumns(cols);
+    renderSelectors();
+    wireEvents();
+    $('totalCount').textContent = data.length;
+    applyFilters();
+  }
+
+  // Load CSV dynamically
+  fetch(CSV_URL, { cache: 'no-store' })
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to fetch ' + CSV_URL + ' (' + res.status + ')');
+      return res.text();
+    })
+    .then(text => {
+      const result = Papa.parse(text, { header: true, skipEmptyLines: true });
+      const rawFields = (result.meta && result.meta.fields) ? result.meta.fields : Object.keys(result.data[0] || {});
+      // Normalize headers (trim), rebuild rows with normalized keys
+      const normFields = rawFields.map(normalizeHeader);
+      const rows = result.data.map(row => {
+        const o = {};
+        rawFields.forEach((orig, idx) => {
+          const key = normFields[idx];
+          let val = row[orig];
+          if (val === '') val = null;
+          if (typeof val === 'string') val = val.replace(/\s+/g,' ').trim(); // tidy spaces in values
+          o[key] = val;
+        });
+        // Special data rules:
+        // 1) 'Adopted' should be nulled
+        if ('Adopted' in o) o['Adopted'] = null;
+        return o;
+      });
+      init(rows, normFields);
+    })
+    .catch(showError);
+})();
+</script>
+</body>
+</html>
