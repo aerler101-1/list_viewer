@@ -4,22 +4,32 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>CEMD — Interactive Catalog (Dynamic CSV)</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
 :root {
   --bg:#e7f4f7;      /* Light Azure */
   --card:#e7f4f7;
-  --muted:#000000;
-  --text:#000000;
+  --muted:#414042;
+  --text:#414042;
   --accent:#F2692A;  /* Naranja */
   --border:#e7f4f7;
 }
-  html,body{background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Noto Sans,Ubuntu,Cantarell,Helvetica,Arial; margin:0; padding:0;}
+ html,body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica, Arial, sans-serif;
+  margin:0;
+  padding:0;
+}
+
   .container{max-width:1200px;margin:24px auto;padding:0 16px;}
   .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.25);margin-top:16px;}
   .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:end;}
   .control{grid-column:span 12;}
   @media(min-width:640px){
-    .control.sm-4{grid-column:span 4;}
+    .control.sm-4{grid-column:span 10;}
     .control.sm-3{grid-column:span 3;}
     .control.sm-2{grid-column:span 2;}
     .control.sm-6{grid-column:span 6;}
@@ -63,27 +73,6 @@
         <label>Product</label>
         <select id="productSelect" multiple></select>
         <span class="hint">Tip: Hold <strong>Shift</strong> to select a range; <strong>Ctrl/Cmd</strong> to toggle single items. Choose <em>(All)</em> to include every product.</span>
-      </div>
-      <div class="control sm-3">
-        <label>Product Type</label>
-        <select id="ptypeSelect">
-          <option value="__ALL__">(All)</option>
-        </select>
-      </div>
-      <div class="control sm-3">
-        <label>Grade Level</label>
-        <select id="glevelSelect">
-          <option value="__ALL__">(All)</option>
-        </select>
-      </div>
-      <div class="control sm-2">
-        <label>Present in Market</label>
-        <select id="presentSelect">
-          <option value="">Any</option>
-          <option value="true">True</option>
-          <option value="false">False</option>
-          <option value="null">Null/Blank</option>
-        </select>
       </div>
       <div class="control sm-12">
         <label>Columns to Display</label>
