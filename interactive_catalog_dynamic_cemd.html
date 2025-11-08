@@ -66,16 +66,15 @@ body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div, tab
   font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica, Arial, sans-serif !important;
 }
 
-/* --- Widow prevention: avoid tiny wraps --- */
+/* Optional per-cell widow handling */
 td.wrap-anywhere {
-  word-break: break-all;    /* allow breaking anywhere */
+  word-break: break-all;
   overflow-wrap: anywhere;
   hyphens: none;
 }
 
-/* --- Inline footnotes styling --- */
+/* Footnotes */
 .footnotes{
-  display:inline-block;
   margin:12px 0 24px;
   color:var(--muted);
   font-size:.8rem;
@@ -86,8 +85,35 @@ td.wrap-anywhere {
   font-weight:500;
 }
 .footnotes h6:last-child{ margin-right:0; }
-table th, table td {
-  vertical-align: top !important;
+
+/* Force top-align for all table cells */
+table th, table td { vertical-align: top !important; }
+
+/* Grouped header: defaults transparent */
+thead tr.group-label th{
+  background: transparent !important;
+  border-bottom: 0;
+  text-align: center;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .04em;
+}
+/* Only the spanned "Recommended" cell is white */
+thead tr.group-label th.group-span{
+  background: #ffffff !important;
+  border-bottom: 1px solid var(--border);
+}
+
+/* NO-WRAP the entire Algebra 1 / Math 1 columns (headers and cells) */
+th[data-col="Algebra 1"],
+td[data-col="Algebra 1"],
+th[data-col="Math 1"],
+td[data-col="Math 1"] {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none !important;
 }
 </style>
 
@@ -130,11 +156,11 @@ table th, table td {
     </div>
   </div>
 
-  <!-- Inline footnotes -->
   <div class="footnotes">
-    <h6>*Refers to the presence of state or national edition present in 24-25 CEMD selection dataset</h6>
-    <h6>**Review of current or previous national edition</h6>
-    <h6>***National edition or corresponding state edition on list</h6>
+    <h4>*Refers to the presence of state or national edition present in 24-25 CEMD selection dataset</h4>
+    <h4>**Review of current or previous national edition</h4>
+    <h4>***National edition or corresponding state edition on list</h4>
+	<h4>Last Updated on 11/10/2025</h4>
   </div>
 </div>
 
@@ -229,53 +255,93 @@ table th, table td {
     const requiredCols=getRequiredCols();
     const chosenSelectable=getMultiValues(columnsSelect);
     const cols=[...new Set([...requiredCols,...chosenSelectable])];
-
     const rows=state.data.filter(r=>productAll||chosenProducts.includes(String(r[productCol])));
 
-function formatCell(val) {
-  const b = coerceBoolish(val);
-  if (b === true)
-    return '<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#000000; vertical-align:middle;"></span>';
-  if (b === false || val == null) return '';
+    function formatCell(val) {
+      const b = coerceBoolish(val);
+      if (b === true)
+       return '<span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:#8a8a8a; vertical-align:middle;"></span>';
+      if (b === false || val == null) return '';
+      const escapeHTML = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      let str = escapeHTML(String(val).trim());
+      str = str.replace(/\uFF08/g, '(').replace(/\uFF09/g, ')');
+      str = str.replace(/(\b[A-Za-z][A-Za-z\/&+\-]*)\s+(\d+\b)/g, '<span class="nb">$1&nbsp;$2</span>');
+      str = str.replace(/(\b(?:cert\w*|deriv\w*))\s*\(\s*([A-Za-z])\s*\)/gi, (_m, w, L) => `<span class="nb">${w}&nbsp;(${L.toUpperCase()})</span>`);
+      str = str.replace(/(\b[^\s(]{2,})\s*\(\s*([A-Za-z0-9]{1,3})\s*\)/g, '<span class="nb">$1&nbsp;($2)</span>');
+      return str;
+    }
 
-  // Escape HTML
-  const escapeHTML = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  let str = escapeHTML(String(val).trim());
+    tableHead.innerHTML='';
+    tableBody.innerHTML='';
 
-  // Normalize full-width parentheses to ASCII (common cause of "not seeing parentheses")
-  str = str.replace(/\uFF08/g, '(').replace(/\uFF09/g, ')');
-
-  // 1) Keep word + number (Algebra 1, Math 2, Grade 5)
-  str = str.replace(/(\b[A-Za-z][A-Za-z\/&+\-]*)\s+(\d+\b)/g, '<span class="nb">$1&nbsp;$2</span>');
-
-  // 2) Specific: Certified/Derivative + (Letter), tolerate misspellings + spaces inside ()
-  str = str.replace(/(\b(?:cert\w*|deriv\w*))\s*\(\s*([A-Za-z])\s*\)/gi,
-                    (_m, w, L) => `<span class="nb">${w}&nbsp;(${L.toUpperCase()})</span>`);
-
-  // 3) Generic fallback: ANY wordish token + (single-letter OR short code)
-  //    - Matches even if there is NO space before '('
-  //    - Allows 1–3 letters/digits as the code (e.g., (C), (D), (A1))
-  //    - Use this to catch things like "Version(A)" or "Unit (B)"
-  str = str.replace(/(\b[^\s(]{2,})\s*\(\s*([A-Za-z0-9]{1,3})\s*\)/g,
-                    '<span class="nb">$1&nbsp;($2)</span>');
-
-  return str;
-}
-
-
-    tableHead.innerHTML='';tableBody.innerHTML='';
     if(cols.length){
+      // --- Detect & render a single "Recommended" span over any subset of the 4 ---
+      function canonLabel(s){
+        return String(s||'')
+          .toLowerCase()
+          .trim()
+          .replace(/[\u2013\u2014]/g,'-')  // en/em dash → hyphen
+          .replace(/\s+/g,' ')
+          .replace(/\balgebra i\b/g,'algebra 1')
+          .replace(/\bmath i\b/g,'math 1');
+      }
+      const recSet = new Set(['k-5','6-8','algebra 1','math 1']);
+      const canonCols = cols.map(canonLabel);
+
+      // Indices of whichever of the 4 are visible (remain contiguous in this schema)
+      const recIdx = canonCols.map((c,i)=> recSet.has(c) ? i : -1).filter(i=>i!==-1);
+
+      if (recIdx.length > 0) {
+        const start = Math.min(...recIdx);
+        const end   = Math.max(...recIdx);
+        const span  = end - start + 1;
+
+        const trGroup = document.createElement('tr');
+        trGroup.classList.add('group-label');
+
+        cols.forEach((_, i) => {
+          if (i === start) {
+            const th = document.createElement('th');
+            th.colSpan = span;
+            th.classList.add('group-span');   // white only over selected subset
+            th.textContent = 'Recommended';
+            trGroup.appendChild(th);
+          } else if (i < start || i > end) {
+            const th = document.createElement('th'); // transparent placeholders
+            th.textContent = '';
+            trGroup.appendChild(th);
+          }
+        });
+        tableHead.appendChild(trGroup);
+      }
+
+      // --- Row 2: normal headers (add data-col for CSS no-wrap targeting) ---
       const trh=document.createElement('tr');
-      cols.forEach(c=>{const th=document.createElement('th');th.textContent=c;trh.appendChild(th);});
+      cols.forEach(c=>{
+        const th=document.createElement('th');
+        th.textContent=c;
+        th.setAttribute('data-col', c); // <<< allow column-based styling
+        trh.appendChild(th);
+      });
       tableHead.appendChild(trh);
+
+      // --- Body (also add data-col so the no-wrap applies to cells) ---
       const frag=document.createDocumentFragment();
       for(const r of rows){
         const tr=document.createElement('tr');
-        for(const c of cols){const td=document.createElement('td');let v=r[c];if(typeof v==='string')v=v.trim();td.innerHTML=formatCell(v);tr.appendChild(td);}
+        for(const c of cols){
+          const td=document.createElement('td');
+          td.setAttribute('data-col', c); // <<< allow column-based styling
+          let v=r[c];
+          if(typeof v==='string')v=v.trim();
+          td.innerHTML=formatCell(v);
+          tr.appendChild(td);
+        }
         frag.appendChild(tr);
       }
       tableBody.appendChild(frag);
     }
+
     $('shownCount').textContent=rows.length;
     return rows;
   }
@@ -317,11 +383,13 @@ function formatCell(val) {
       const rows=result.data.map(row=>{
         const o={};
         rawFields.forEach((orig,idx)=>{
-          const key=normFields[idx];let val=row[orig];
-          if(val==='')val=null;if(typeof val==='string')val=val.replace(/\s+/g,' ').trim();
+          const key=normFields[idx];
+          let val=row[orig];
+          if(val==='') val=null;
+          if(typeof val==='string') val=val.replace(/\s+/g,' ').trim();
           o[key]=val;
         });
-        if('Adopted'in o)o['Adopted']=null;
+        if('Adopted' in o) o['Adopted']=null;
         return o;
       });
       init(rows,normFields);
