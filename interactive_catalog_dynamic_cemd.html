@@ -9,62 +9,62 @@
 
 <style>
 :root {
-  --bg:#e7f4f7;      /* Light Azure */
+  --bg:#e7f4f7;
   --card:#e7f4f7;
   --muted:#414042;
   --text:#414042;
-  --accent:#F2692A;  /* Naranja */
+  --accent:#F2692A;
   --border:#e7f4f7;
 }
- html,body{
+html,body{
   background:var(--bg);
   color:var(--text);
   font-family:'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica, Arial, sans-serif;
   margin:0;
   padding:0;
 }
-
-  .container{max-width:1200px;margin:24px auto;padding:0 16px;}
-  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.25);margin-top:16px;}
-  .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:end;}
-  .control{grid-column:span 12;}
-  @media(min-width:640px){
-    .control.sm-4{grid-column:span 10;}
-    .control.sm-3{grid-column:span 3;}
-    .control.sm-2{grid-column:span 2;}
-    .control.sm-6{grid-column:span 6;}
-    .control.sm-12{grid-column:span 12;}
-  }
-  label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px;}
-  .hint{display:block;font-size:.8rem;color:var(--muted);margin-top:6px;}
-  select,input[type="search"]{
+.container{max-width:1200px;margin:24px auto;padding:0 16px;}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.25);margin-top:16px;}
+.controls{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:end;}
+.control{grid-column:span 12;}
+@media(min-width:640px){
+  .control.sm-4{grid-column:span 4;}
+  .control.sm-3{grid-column:span 3;}
+  .control.sm-2{grid-column:span 2;}
+  .control.sm-6{grid-column:span 6;}
+  .control.sm-12{grid-column:span 12;}
+}
+label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px;}
+.hint{display:block;font-size:.8rem;color:var(--muted);margin-top:6px;}
+select,input[type="search"]{
   width:100%;
-  background:#ffffff;            /* white or a light tone */
+  background:#ffffff;
   border:1px solid var(--border);
-  color:#29264B;                 /* your Deep Space text color */
+  color:#29264B;
   border-radius:10px;
   padding:8px 10px;
   outline:none;
 }
-  select[multiple]{height:160px;}
-  .btns{display:flex;gap:8px;flex-wrap:wrap;}
-  button{background:var(--accent);color:#240E05;border:none;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;}
-  button.secondary{background:transparent;color:var(--text);border:1px solid var(--border);}
-  .kpi{display:flex;gap:16px;flex-wrap:wrap;color:#F2692A;font-weight:600;font-size:.95rem;}
-  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace; font-size:.85rem; background:#221f41; border:1px solid var(--border); padding:4px 8px; border-radius:8px;}
-  table{width:100%;border-collapse:collapse;margin-top:12px;}
-  thead th{position:sticky;top:0;background:#e7f4f7;border-bottom:1px solid var(--border);text-align:left;padding:8px;font-size:.9rem;}
-  tbody td{border-bottom:1px solid var(--border);padding:8px;vertical-align:top;font-size:.9rem;}
-  .table-wrap{max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:12px;}
-  .error{white-space:pre-wrap;color:#fecaca;background:#45120a;border:1px solid #8f2b10;padding:10px;border-radius:10px;display:none;}
-  .brand-sticky{position:fixed; right:16px; bottom:16px; opacity:0.9; z-index:9999;}
-  .brand-sticky img{max-width:160px; height:auto; filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));}
-  a, a:visited{color:var(--accent);}
+select[multiple]{height:160px;}
+.btns{display:flex;gap:8px;flex-wrap:wrap;}
+button{background:var(--accent);color:#240E05;border:none;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;}
+button.secondary{background:transparent;color:var(--text);border:1px solid var(--border);}
+.kpi{display:flex;gap:16px;flex-wrap:wrap;color:#F2692A;font-weight:600;font-size:.95rem;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace; font-size:.85rem; background:#221f41; border:1px solid var(--border); padding:4px 8px; border-radius:8px;}
+table{width:100%;border-collapse:collapse;margin-top:12px;}
+thead th{position:sticky;top:0;background:#e7f4f7;border-bottom:1px solid var(--border);text-align:left;padding:8px;font-size:.9rem;}
+tbody td{border-bottom:1px solid var(--border);padding:8px;vertical-align:top;font-size:.9rem;}
+.table-wrap{max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:12px;}
+.error{white-space:pre-wrap;color:#fecaca;background:#45120a;border:1px solid #8f2b10;padding:10px;border-radius:10px;display:none;}
+.brand-sticky{position:fixed; right:16px; bottom:16px; opacity:0.9; z-index:9999;}
+.brand-sticky img{max-width:160px; height:auto; filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));}
+a, a:visited{color:var(--accent);}
 </style>
 </head>
 <body>
 <div class="container">
+
 
 
   <div class="panel">
@@ -74,16 +74,46 @@
         <select id="productSelect" multiple></select>
         <span class="hint">Tip: Hold <strong>Shift</strong> to select a range; <strong>Ctrl/Cmd</strong> to toggle single items. Choose <em>(All)</em> to include every product.</span>
       </div>
+
+      <!-- ADDED: Product Type -->
+      <div class="control sm-3">
+        <label>Product Type</label>
+        <select id="ptypeSelect"></select>
+        <span class="hint">Use <em>(All)</em> to include every type.</span>
+      </div>
+
+      <!-- ADDED: Grade Level -->
+      <div class="control sm-3">
+        <label>Grade Level</label>
+        <select id="glevelSelect"></select>
+        <span class="hint">Use <em>(All)</em> to include every grade.</span>
+      </div>
+
+      <!-- ADDED: Present in Market -->
+      <div class="control sm-2">
+        <label>Present in Market</label>
+        <select id="presentSelect">
+          <option value="">(Any)</option>
+          <option value="true">True</option>
+          <option value="false">False</option>
+          <option value="null">Null</option>
+        </select>
+      </div>
+
       <div class="control sm-12">
         <label>Columns to Display</label>
         <select id="columnsSelect" multiple></select>
         <span class="hint">Hold <strong>Shift</strong> for ranges; <strong>Ctrl/Cmd</strong> to add/remove individual items.</span>
       </div>
+
       <div class="control sm-12 btns">
         <button id="resetBtn" class="secondary">Reset Filters</button>
         <button id="downloadBtn">Download filtered CSV</button>
       </div>
     </div>
+
+    <!-- ADDED: error box so showError() can render -->
+    <div id="errorBox" class="error"></div>
   </div>
 
   <div class="panel">
@@ -98,7 +128,6 @@
       </table>
     </div>
   </div>
-
 
 </div>
 
@@ -121,24 +150,24 @@
     colmap: { product:null, product_type:null, grade_level:null, present:null }
   };
 
-  // Candidate names (normalized, lower-case)
   const CANDIDATES = {
     product: ['product','product name','program','series','title','name'],
     product_type: ['product type','grade band','grade_band','gradeband','type'],
-    grade_level: ['grade level','grade_level','grade', 'grades_served', 'grades'],
+    grade_level: ['grade level','grade_level','grade','grades_served','grades'],
     present: ['present in market','present_in_market','in market','in_market','present']
   };
 
-function showError(e) {
-  console.error(e);
-  if (errorBox) {
-    errorBox.style.display = 'block';
-    errorBox.textContent = 'Error: ' + (e && e.message ? e.message : e);
+  function showError(e) {
+    console.error(e);
+    if (errorBox) {
+      errorBox.style.display = 'block';
+      errorBox.textContent = 'Error: ' + (e && e.message ? e.message : e);
+    }
   }
-}
 
   function uniq(arr) { return Array.from(new Set(arr.filter(v => v !== null && v !== undefined && String(v).trim() !== ''))); }
   function setOptions(select, values, withAll=false) {
+    if (!select) return;
     select.innerHTML = '';
     if (withAll) {
       const opt = document.createElement('option');
@@ -152,7 +181,7 @@ function showError(e) {
       select.appendChild(opt);
     });
   }
-  function getMultiValues(select) { return Array.from(select.selectedOptions).map(o => o.value); }
+  function getMultiValues(select) { return Array.from(select?.selectedOptions || []).map(o => o.value); }
   function coerceBoolish(v) {
     if (v === null || v === undefined) return null;
     if (typeof v === 'boolean') return v;
@@ -173,11 +202,10 @@ function showError(e) {
         const idx = lc.indexOf(cand);
         if (idx !== -1) return cols[idx];
       }
-      // heuristic
       for (const c of cols) {
         const s = c.toLowerCase();
         if (kind === 'product' && ['product','program','series','title','name'].some(k=>s.includes(k))) return c;
-        if (kind === 'product_type' && (s.includes('product') && s.includes('type') || s.includes('grade band'))) return c;
+        if (kind === 'product_type' && ((s.includes('product') && s.includes('type')) || s.includes('grade band'))) return c;
         if (kind === 'grade_level' && (s.includes('grade') || s === 'grades')) return c;
         if (kind === 'present' && (s.includes('present') || s.includes('in market'))) return c;
       }
@@ -188,7 +216,7 @@ function showError(e) {
     state.colmap.grade_level = find('grade_level');
     state.colmap.present = find('present');
     const cmp = document.getElementById('colmapPreview');
-	if (cmp) cmp.textContent = 'Detected → ' + JSON.stringify(state.colmap);
+    if (cmp) cmp.textContent = 'Detected → ' + JSON.stringify(state.colmap);
   }
 
   function renderSelectors() {
@@ -202,7 +230,6 @@ function showError(e) {
     const gradeCol = state.colmap.grade_level;
 
     const products = productCol ? uniq(state.data.map(r => r[productCol])) : [];
-    // Inject "(All)" at top for multi-select list
     productSelect.innerHTML = '';
     const allOpt = document.createElement('option'); allOpt.textContent='(All)'; allOpt.value='(All)';
     productSelect.appendChild(allOpt);
@@ -215,6 +242,8 @@ function showError(e) {
     setOptions(glevelSelect, grades, true);
 
     setOptions(columnsSelect, state.cols, false);
+
+    // pre-select some useful columns
     const defaults = [productCol, typeCol, gradeCol, state.colmap.present].filter(Boolean);
     const extras = state.cols.filter(c => !defaults.includes(c)).slice(0,4);
     const initial = Array.from(new Set([...defaults, ...extras]));
@@ -237,9 +266,9 @@ function showError(e) {
 
     const chosenProducts = getMultiValues(productSelect);
     const productAllSelected = chosenProducts.includes('(All)') || chosenProducts.length === 0;
-    const chosenType = ptypeSelect.value || '__ALL__';
-    const chosenGrade = glevelSelect.value || '__ALL__';
-    const presentVal = presentSelect.value || '';
+    const chosenType = ptypeSelect?.value || '__ALL__';
+    const chosenGrade = glevelSelect?.value || '__ALL__';
+    const presentVal = presentSelect?.value || '';
     const cols = getMultiValues(columnsSelect);
 
     let rows = state.data.filter(r => {
@@ -260,13 +289,16 @@ function showError(e) {
       }
       return true;
     });
+
 function formatCell(val) {
   const b = coerceBoolish(val);
-  if (b === true) return '•';     // dot for TRUE
-  if (b === false || val == null) return '';  // blank for FALSE/NULL
+  if (b === true)
+    return '<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#000000; vertical-align:middle;"></span>';
+  if (b === false || val == null) return '';
   return String(val);
 }
-    // Render table
+
+
     tableHead.innerHTML = '';
     tableBody.innerHTML = '';
     if (cols.length) {
@@ -281,7 +313,7 @@ function formatCell(val) {
           const td = document.createElement('td');
           let v = r[c];
           if (typeof v === 'string') v = v.trim();
-          td.textContent = formatCell(v);;
+          td.innerHTML = formatCell(v);
           tr.appendChild(td);
         }
         frag.appendChild(tr);
@@ -304,17 +336,17 @@ function formatCell(val) {
   }
 
   function wireEvents() {
-    $('productSelect').addEventListener('change', applyFilters);
-    $('ptypeSelect').addEventListener('change', applyFilters);
-    $('glevelSelect').addEventListener('change', applyFilters);
-    $('presentSelect').addEventListener('change', applyFilters);
-    $('columnsSelect').addEventListener('change', applyFilters);
+    $('productSelect')?.addEventListener('change', applyFilters);
+    $('ptypeSelect')?.addEventListener('change', applyFilters);
+    $('glevelSelect')?.addEventListener('change', applyFilters);
+    $('presentSelect')?.addEventListener('change', applyFilters);
+    $('columnsSelect')?.addEventListener('change', applyFilters);
 
-    $('resetBtn').addEventListener('click', () => {
-      $('productSelect').selectedIndex = -1; // clears selection (treated as All)
-      $('ptypeSelect').value = '__ALL__';
-      $('glevelSelect').value = '__ALL__';
-      $('presentSelect').value = '';
+    $('resetBtn')?.addEventListener('click', () => {
+      $('productSelect').selectedIndex = -1;
+      if ($('ptypeSelect')) $('ptypeSelect').value = '__ALL__';
+      if ($('glevelSelect')) $('glevelSelect').value = '__ALL__';
+      if ($('presentSelect')) $('presentSelect').value = '';
       const columnsSelect = $('columnsSelect');
       const productCol = state.colmap.product || state.cols[0];
       const defaults = [productCol, state.colmap.product_type, state.colmap.grade_level, state.colmap.present].filter(Boolean);
@@ -324,7 +356,7 @@ function formatCell(val) {
       applyFilters();
     });
 
-    $('downloadBtn').addEventListener('click', () => {
+    $('downloadBtn')?.addEventListener('click', () => {
       const cols = getMultiValues($('columnsSelect'));
       const filtered = applyFilters() || [];
       const csv = toCSV(filtered, cols);
@@ -340,7 +372,7 @@ function formatCell(val) {
     state.data = data;
     state.cols = cols;
     const meta = document.getElementById('metaKpi');
-	if (meta) meta.textContent = `${data.length} rows • ${cols.length} columns`
+    if (meta) meta.textContent = `${data.length} rows • ${cols.length} columns`;
     detectColumns(cols);
     renderSelectors();
     wireEvents();
@@ -357,7 +389,6 @@ function formatCell(val) {
     .then(text => {
       const result = Papa.parse(text, { header: true, skipEmptyLines: true });
       const rawFields = (result.meta && result.meta.fields) ? result.meta.fields : Object.keys(result.data[0] || {});
-      // Normalize headers (trim), rebuild rows with normalized keys
       const normFields = rawFields.map(normalizeHeader);
       const rows = result.data.map(row => {
         const o = {};
@@ -365,11 +396,10 @@ function formatCell(val) {
           const key = normFields[idx];
           let val = row[orig];
           if (val === '') val = null;
-          if (typeof val === 'string') val = val.replace(/\s+/g,' ').trim(); // tidy spaces in values
+          if (typeof val === 'string') val = val.replace(/\s+/g,' ').trim();
           o[key] = val;
         });
-        // Special data rules:
-        // 1) 'Adopted' should be nulled
+        // NOTE: remove this line if you actually want Adopted values kept
         if ('Adopted' in o) o['Adopted'] = null;
         return o;
       });
