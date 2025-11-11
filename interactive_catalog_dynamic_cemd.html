@@ -7,7 +7,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-
 <style>
 :root {
   --bg:#e7f4f7;
@@ -26,39 +25,12 @@ html,body{
 }
 .container{max-width:1200px;margin:24px auto;padding:0 16px;}
 .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.25);margin-top:16px;}
-.controls{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:end;}
-.control{grid-column:span 12;}
-@media(min-width:640px){
-  .control.sm-4{grid-column:span 10;}
-  .control.sm-3{grid-column:span 3;}
-  .control.sm-2{grid-column:span 2;}
-  .control.sm-6{grid-column:span 6;}
-  .control.sm-12{grid-column:span 12;}
-}
-label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px;}
-.hint{display:block;font-size:.8rem;color:var(--muted);margin-top:6px;}
-select,input[type="search"]{
-  width:100%;
-  background:#ffffff;
-  border:1px solid var(--border);
-  color:#29264B;
-  border-radius:10px;
-  padding:8px 10px;
-  outline:none;
-}
-select[multiple]{height:160px;}
-.btns{display:flex;gap:8px;flex-wrap:wrap;}
-button{background:var(--accent);color:#240E05;border:none;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;}
-button.secondary{background:transparent;color:var(--text);border:1px solid var(--border);}
-.kpi{display:flex;gap:16px;flex-wrap:wrap;color:#29264B;font-weight:600;font-size:.95rem;}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-.mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace; font-size:.85rem; background:#221f41; border:1px solid var(--border); padding:4px 8px; border-radius:8px;}
+.table-wrap{max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:12px;}
 table{width:100%;border-collapse:collapse;margin-top:12px;}
 thead th{position:sticky;top:0;background:#e7f4f7;border-bottom:1px solid var(--border);text-align:left;padding:8px;font-size:.9rem;}
 tbody td{border-bottom:1px solid var(--border);padding:8px;vertical-align:top;font-size:.9rem;}
-.table-wrap{max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:12px;}
+button{background:var(--accent);color:#240E05;border:none;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;}
 .error{white-space:pre-wrap;color:#fecaca;background:#45120a;border:1px solid #8f2b10;padding:10px;border-radius:10px;display:none;}
-
 a, a:visited{color:var(--accent);}
 
 /* Force Montserrat globally */
@@ -96,12 +68,6 @@ body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div, tab
   color:var(--muted);
   font-size:.8rem;
 }
-.footnotes h6{
-  display:inline;
-  margin:0 12px 0 0;
-  font-weight:500;
-}
-.footnotes h6:last-child{ margin-right:0; }
 .footnotes-row{
   margin-top:8px;
   display:flex;
@@ -124,7 +90,7 @@ body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div, tab
 /* Force top-align for all table cells */
 table th, table td { vertical-align: top !important; }
 
-/* Grouped header */
+/* Grouped header (optional “SBoE Adopted Programs”) */
 thead tr.group-label th{
   background: transparent !important;
   border-bottom: 0;
@@ -156,22 +122,16 @@ td[data-col="Math 1"] {
 
   <!-- HEADER BAR -->
   <div class="header-bar">
-    <p>COPY ON THE WAY</p>
+    <p>Explore the mathematics instructional materials adopted by California in 2025. Products are grouped into families, with detailed information to help you learn more about the program.</p>
     <img src="cemd_logo.png" alt="CEMD logo" />
   </div>
 
   <div class="panel">
-
-
-      <div class="control sm-12 btns">
-        <button id="downloadBtn" style="color:white">Download CSV</button>
-      </div>
-    </div>
-    <div id="errorBox" class="error"></div>
+    <button id="downloadBtn" style="color:white">Download CSV</button>
+    <div id="errorBox" class="error" style="margin-top:12px;"></div>
   </div>
 
   <div class="panel">
-
     <div class="table-wrap">
       <table id="resultsTable">
         <thead id="tableHead"></thead>
@@ -184,15 +144,11 @@ td[data-col="Math 1"] {
     <h4>*Refers to the presence of state or national edition present in 2024–25 CEMD selection dataset</h4>
     <h4>**Review of current or previous national edition</h4>
     <h4>***National edition or corresponding state edition on list</h4>
-
     <div class="footnotes-row">
       <h4 class="last-updated">Last Updated on 11/11/2025</h4>
     </div>
   </div>
 </div>
-
-
-
 
 <!-- Papa Parse -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -201,16 +157,7 @@ td[data-col="Math 1"] {
 (function() {
   const CSV_URL = 'list_local_clean.csv';
   const $ = (id) => document.getElementById(id);
-  const errorBox = document.getElementById('errorBox');
-
-  const state = { data: [], cols: [], colmap: { product:null, product_type:null, grade_level:null, present:null } };
-  const REQUIRED_COLS_WANTED = ['product family', 'publisher'];
-  const CANDIDATES = {
-    product: ['product','product name','program','series','title','name'],
-    product_type: ['product type','grade band','grade_band','gradeband','type'],
-    grade_level: ['grade level','grade_level','grade','grades_served','grades'],
-    present: ['present in market','present_in_market','in market','in_market','present']
-  };
+  const errorBox = $('errorBox');
 
   function showError(e){
     console.error(e);
@@ -219,209 +166,158 @@ td[data-col="Math 1"] {
       errorBox.textContent='Error: '+(e?.message||e);
     }
   }
-  function uniq(arr){return Array.from(new Set(arr.filter(v=>v!=null&&String(v).trim()!=='')));}
-  function setOptions(select,values,withAll=false){
-    if(!select)return;
-    select.innerHTML='';
-    if(withAll){const opt=document.createElement('option');opt.value='__ALL__';opt.textContent='(All)';select.appendChild(opt);}
-    values.forEach(v=>{const o=document.createElement('option');o.value=String(v);o.textContent=String(v);select.appendChild(o);});
-  }
-  function getMultiValues(select){return Array.from(select?.selectedOptions||[]).map(o=>o.value);}
-  function coerceBoolish(v){if(v==null)return null;if(typeof v==='boolean')return v;const s=String(v).trim().toLowerCase();if(['true','t','yes','y','1'].includes(s))return true;if(['false','f','no','n','0'].includes(s))return false;return null;}
-  function normalizeHeader(h){return String(h||'').replace(/\s+/g,' ').trim();}
 
-  function detectColumns(cols){
-    const lc=cols.map(c=>c.toLowerCase());
-    function find(kind){
-      for(const cand of CANDIDATES[kind]){const idx=lc.indexOf(cand);if(idx!==-1)return cols[idx];}
-      for(const c of cols){
-        const s=c.toLowerCase();
-        if(kind==='product'&&['product','program','series','title','name'].some(k=>s.includes(k)))return c;
-        if(kind==='product_type'&&((s.includes('product')&&s.includes('type'))||s.includes('grade band')))return c;
-        if(kind==='grade_level'&&(s.includes('grade')||s==='grades'))return c;
-        if(kind==='present'&&(s.includes('present')||s.includes('in market')))return c;
-      }return null;
-    }
-    state.colmap.product=find('product');
-    state.colmap.product_type=find('product_type');
-    state.colmap.grade_level=find('grade_level');
-    state.colmap.present=find('present');
+  // --- UPDATED: stronger header cleanup ---
+  function normalizeHeader(h){
+    return String(h ?? '')
+      .replace(/^\uFEFF/, '')                                   // remove BOM if present
+      .replace(/^[\s'"\u2018\u2019\u201C\u201D]+/, '')          // trim leading quotes/spaces (straight + smart)
+      .replace(/[\s'"\u2018\u2019\u201C\u201D]+$/, '')          // trim trailing quotes/spaces
+      .replace(/\s+/g, ' ')                                      // collapse inner whitespace
+      .trim();
   }
 
-  function getRequiredCols(){
-    const map=new Map(state.cols.map(c=>[c.toLowerCase(),c]));
-    return REQUIRED_COLS_WANTED.map(w=>map.get(w)).filter(Boolean);
-  }
-
-  function renderSelectors(){
-    const productSelect=$('productSelect');
-    const columnsSelect=$('columnsSelect');
-    const productCol=state.colmap.product||state.cols[0];
-    const products=productCol?uniq(state.data.map(r=>r[productCol])):[];
-    productSelect.innerHTML='';
-    const allOpt=document.createElement('option');allOpt.textContent='(All)';allOpt.value='(All)';productSelect.appendChild(allOpt);
-    products.forEach(v=>{const opt=document.createElement('option');opt.value=String(v);opt.textContent=String(v);productSelect.appendChild(opt);});
-
-    const required=new Set(getRequiredCols());
-    const selectableCols=state.cols.filter(c=>!required.has(c));
-    setOptions(columnsSelect,selectableCols,false);
-    const defaults=[productCol,state.colmap.product_type,state.colmap.grade_level,state.colmap.present].filter(Boolean).filter(c=>!required.has(c));
-    const extras=selectableCols.filter(c=>!defaults.includes(c)).slice(0,4);
-    const initial=[...new Set([...defaults,...extras])];
-    for(const opt of columnsSelect.options){if(initial.includes(opt.value))opt.selected=true;}
-  }
-
-  function applyFilters(){
-    const productCol=state.colmap.product||state.cols[0];
-    const productSelect=$('productSelect');
-    const columnsSelect=$('columnsSelect');
-    const tableHead=$('tableHead');const tableBody=$('tableBody');
-    const chosenProducts=getMultiValues(productSelect);
-    const productAll=chosenProducts.includes('(All)')||chosenProducts.length===0;
-    const requiredCols=getRequiredCols();
-    const chosenSelectable=getMultiValues(columnsSelect);
-    const cols=[...new Set([...requiredCols,...chosenSelectable])];
-    const rows=state.data.filter(r=>productAll||chosenProducts.includes(String(r[productCol])));
-
-    function formatCell(val) {
-      const b = coerceBoolish(val);
-      if (b === true)
-       return '<span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:#8a8a8a; vertical-align:middle;"></span>';
-      if (b === false || val == null) return '';
-      const escapeHTML = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      let str = escapeHTML(String(val).trim());
-      str = str.replace(/\uFF08/g, '(').replace(/\uFF09/g, ')');
-      str = str.replace(/(\b[A-Za-z][A-Za-z\/&+\-]*)\s+(\d+\b)/g, '<span class="nb">$1&nbsp;$2</span>');
-      str = str.replace(/(\b(?:cert\w*|deriv\w*))\s*\(\s*([A-Za-z])\s*\)/gi, (_m, w, L) => `<span class="nb">${w}&nbsp;(${L.toUpperCase()})</span>`);
-      str = str.replace(/(\b[^\s(]{2,})\s*\(\s*([A-Za-z0-9]{1,3})\s*\)/g, '<span class="nb">$1&nbsp;($2)</span>');
-      return str;
-    }
-
-    tableHead.innerHTML='';
-    tableBody.innerHTML='';
-
-    if(cols.length){
-      // --- Detect & render a single "Recommended" span over any subset of the 4 ---
-      function canonLabel(s){
-        return String(s||'')
-          .toLowerCase()
-          .trim()
-          .replace(/[\u2013\u2014]/g,'-')  // en/em dash → hyphen
-          .replace(/\s+/g,' ')
-          .replace(/\balgebra i\b/g,'algebra 1')
-          .replace(/\bmath i\b/g,'math 1');
-      }
-      const recSet = new Set(['k-5','6-8','algebra 1','math 1']);
-      const canonCols = cols.map(canonLabel);
-
-      // Indices of whichever of the 4 are visible (remain contiguous in this schema)
-      const recIdx = canonCols.map((c,i)=> recSet.has(c) ? i : -1).filter(i=>i!==-1);
-
-      if (recIdx.length > 0) {
-        const start = Math.min(...recIdx);
-        const end   = Math.max(...recIdx);
-        const span  = end - start + 1;
-
-        const trGroup = document.createElement('tr');
-        trGroup.classList.add('group-label');
-
-        cols.forEach((_, i) => {
-          if (i === start) {
-            const th = document.createElement('th');
-            th.colSpan = span;
-            th.classList.add('group-span');   // white only over selected subset
-            th.textContent = 'SBoE Adopted Programs';
-            trGroup.appendChild(th);
-          } else if (i < start || i > end) {
-            const th = document.createElement('th'); // transparent placeholders
-            th.textContent = '';
-            trGroup.appendChild(th);
-          }
-        });
-        tableHead.appendChild(trGroup);
-      }
-
-      // --- Row 2: normal headers (add data-col for CSS no-wrap targeting) ---
-      const trh=document.createElement('tr');
-      cols.forEach(c=>{
-        const th=document.createElement('th');
-        th.textContent=c;
-        th.setAttribute('data-col', c); // <<< allow column-based styling
-        trh.appendChild(th);
-      });
-      tableHead.appendChild(trh);
-
-      // --- Body (also add data-col so the no-wrap applies to cells) ---
-      const frag=document.createDocumentFragment();
-      for(const r of rows){
-        const tr=document.createElement('tr');
-        for(const c of cols){
-          const td=document.createElement('td');
-          td.setAttribute('data-col', c); // <<< allow column-based styling
-          let v=r[c];
-          if(typeof v==='string')v=v.trim();
-          td.innerHTML=formatCell(v);
-          tr.appendChild(td);
-        }
-        frag.appendChild(tr);
-      }
-      tableBody.appendChild(frag);
-    }
-
-    $('shownCount').textContent=rows.length;
-    return rows;
-  }
-
-  function toCSV(rows,columns){
-    const esc=s=>s==null?'':/[",\n]/.test(s)?'"'+String(s).replace(/"/g,'""')+'"':s;
-    const header=columns.map(esc).join(',');
-    const body=rows.map(r=>columns.map(c=>esc(r[c]||'')).join(',')).join('\n');
-    return header+'\n'+body;
-  }
-
-  function wireEvents(){
-    $('productSelect')?.addEventListener('change',applyFilters);
-    $('columnsSelect')?.addEventListener('change',applyFilters);
-    $('resetBtn')?.addEventListener('click',()=>{ $('productSelect').selectedIndex=-1; applyFilters(); });
-    $('downloadBtn')?.addEventListener('click',()=>{
-      const cols=[...new Set([...getRequiredCols(),...getMultiValues($('columnsSelect'))])];
-      const filtered=applyFilters()||[];
-      const csv=toCSV(filtered,cols);
-      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');a.href=url;a.download='CEMD_CA-Adoption-List-Explorer_2025.csv';
-      document.body.appendChild(a);a.click();URL.revokeObjectURL(url);a.remove();
+  // Ensure headers remain unique after normalization
+  function uniquify(names){
+    const seen = Object.create(null);
+    return names.map((name)=>{
+      let base = name || 'col';
+      let n = base, i = 2;
+      while(seen[n]) n = `${base}_${i++}`;
+      seen[n] = true;
+      return n;
     });
   }
 
-  function init(data,cols){
-    state.data=data;state.cols=cols;
-    detectColumns(cols);renderSelectors();wireEvents();
-    $('totalCount').textContent=data.length;applyFilters();
+  function coerceBoolish(v){
+    if(v==null) return null;
+    if(typeof v==='boolean') return v;
+    const s=String(v).trim().toLowerCase();
+    if(['true','t','yes','y','1'].includes(s)) return true;
+    if(['false','f','no','n','0'].includes(s)) return false;
+    return null;
   }
 
+  function formatCell(val) {
+    const b = coerceBoolish(val);
+    if (b === true)
+      return '<span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:#8a8a8a; vertical-align:middle;"></span>';
+    if (b === false || val == null) return '';
+    const escapeHTML = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    let str = escapeHTML(String(val).trim());
+    str = str.replace(/\uFF08/g, '(').replace(/\uFF09/g, ')');
+    str = str.replace(/(\b[A-Za-z][A-Za-z\/&+\-]*)\s+(\d+\b)/g, '<span class="nb">$1&nbsp;$2</span>');
+    str = str.replace(/(\b(?:cert\w*|deriv\w*))\s*\(\s*([A-Za-z])\s*\)/gi, (_m, w, L) => `<span class="nb">${w}&nbsp;(${L.toUpperCase()})</span>`);
+    str = str.replace(/(\b[^\s(]{2,})\s*\(\s*([A-Za-z0-9]{1,3})\s*\)/g, '<span class="nb">$1&nbsp;($2)</span>');
+    return str;
+  }
+
+  function addGroupedHeaderIfNeeded(cols, thead){
+    const canon = s => String(s||'').toLowerCase().trim()
+      .replace(/[\u2013\u2014]/g,'-')
+      .replace(/\s+/g,' ')
+      .replace(/\balgebra i\b/g,'algebra 1')
+      .replace(/\bmath i\b/g,'math 1');
+
+    const recSet = new Set(['k-5','6-8','algebra 1','math 1']);
+    const canonCols = cols.map(canon);
+    const idxs = canonCols.map((c,i)=> recSet.has(c) ? i : -1).filter(i=>i!==-1);
+    if (!idxs.length) return;
+
+    const start = Math.min(...idxs), end = Math.max(...idxs), span = end - start + 1;
+    const trGroup = document.createElement('tr');
+    trGroup.classList.add('group-label');
+
+    cols.forEach((_, i) => {
+      const th = document.createElement('th');
+      if (i === start){
+        th.colSpan = span;
+        th.classList.add('group-span');
+        th.textContent = 'SBoE Adopted Programs';
+      } else if (i < start || i > end){
+        th.textContent = '';
+      }
+      trGroup.appendChild(th);
+    });
+    thead.appendChild(trGroup);
+  }
+
+  function renderTable(rows, cols){
+    const thead = $('tableHead');
+    const tbody = $('tableBody');
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+
+    addGroupedHeaderIfNeeded(cols, thead);
+
+    const trh = document.createElement('tr');
+    cols.forEach(c=>{
+      const th = document.createElement('th');
+      th.textContent = c;
+      th.setAttribute('data-col', c);
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+
+    const frag = document.createDocumentFragment();
+    for (const r of rows){
+      const tr = document.createElement('tr');
+      for (const c of cols){
+        const td = document.createElement('td');
+        td.setAttribute('data-col', c);
+        let v = r[c];
+        if (typeof v === 'string') v = v.trim();
+        td.innerHTML = formatCell(v);
+        tr.appendChild(td);
+      }
+      frag.appendChild(tr);
+    }
+    tbody.appendChild(frag);
+  }
+
+  function wireDownload(){
+    const btn = $('downloadBtn');
+    if (!btn) return;
+    btn.addEventListener('click', ()=>{
+      const a = document.createElement('a');
+      a.href = CSV_URL;
+      a.download = 'CEMD_CA-Adoption-List-Explorer_2025.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+  }
+
+  // --- UPDATED: parsing that applies header cleanup + uniqueness
   fetch(CSV_URL,{cache:'no-store'})
-    .then(res=>{if(!res.ok)throw new Error('Failed to fetch '+CSV_URL+' ('+res.status+')');return res.text();})
+    .then(res=>{ if(!res.ok) throw new Error('Failed to fetch '+CSV_URL+' ('+res.status+')'); return res.text(); })
     .then(text=>{
-      const result=Papa.parse(text,{header:true,skipEmptyLines:true});
-      const rawFields=result.meta?.fields||Object.keys(result.data[0]||{});
-      const normFields=rawFields.map(normalizeHeader);
-      const rows=result.data.map(row=>{
-        const o={};
-        rawFields.forEach((orig,idx)=>{
-          const key=normFields[idx];
-          let val=row[orig];
-          if(val==='') val=null;
-          if(typeof val==='string') val=val.replace(/\s+/g,' ').trim();
-          o[key]=val;
+      const result = Papa.parse(text,{header:true,skipEmptyLines:true});
+      const rawFields = result.meta?.fields || Object.keys(result.data[0]||{});
+
+      const cleaned = rawFields.map(normalizeHeader);
+      const normFields = uniquify(cleaned);
+
+      // Build rows keyed by the *clean* header names
+      const rows = result.data.map(row=>{
+        const o = {};
+        rawFields.forEach((orig, idx)=>{
+          const key = normFields[idx];
+          let val = row[orig];
+          if (val === '') val = null;
+          if (typeof val === 'string') val = val.replace(/\s+/g,' ').trim();
+          o[key] = val;
         });
-        if('Adopted' in o) o['Adopted']=null;
+        if ('Adopted' in o) o['Adopted'] = null;
         return o;
       });
-      init(rows,normFields);
+
+      renderTable(rows, normFields);
+      wireDownload();
     })
     .catch(showError);
 })();
 </script>
+
 </body>
 </html>
