@@ -77,24 +77,56 @@ body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div, tab
 }
 
 /* Sticky header rows */
+/* Row 1: SBoE group header */
 thead tr.group-label th{
   position: sticky;
   top: 0;
   z-index: 8;
-  background: #e7f4f7 !important;
-  border-bottom: 1px solid var(--border);
-  text-align:center;
-  font-size:.8rem;
-  font-weight:600;
-  color:var(--muted);
-  letter-spacing:.04em;
+  /* Use header background so body cells don't show through */
+  background: #e7f4f7;            /* match your thead bg */
+  border: 0;                      /* no borders on the empty cells */
+  padding-top: 8px;
+  padding-bottom: 8px;
+  text-align: center;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .04em;
 }
+
+/* Only the spanned SBoE cell gets the white pill + borders */
+thead tr.group-label th.group-span{
+  background: #ffffff !important; /* white pill over the annotated columns */
+  border-bottom: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  z-index: 9;                     /* above its siblings */
+}
+
+/* Row 2: column headers remain sticky below row 1 */
 thead tr.columns-header th{
   position: sticky;
   top: var(--h1, 32px);
   z-index: 7;
   background: #e7f4f7;
 }
+
+/* First column layering stays correct */
+thead th:nth-child(1){ z-index: 10; }
+
+/* First column remains sticky and layers correctly */
+table th:nth-child(1),
+table td:nth-child(1){
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  box-shadow: 2px 0 0 rgba(0,0,0,0.04);
+}
+thead th:nth-child(1){ z-index: 10; }
 
 /* Sticky first column */
 table th:nth-child(1),
