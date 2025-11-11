@@ -24,21 +24,21 @@ html,body{
   padding:0;
 }
 .container{max-width:1200px;margin:24px auto;padding:0 16px;}
-.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.25);margin-top:16px;}
-.table-wrap{max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:12px;}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 20px rgba(0,0,0,.25);margin-top:16px;position:relative;}
+.table-wrap{max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:12px;padding-bottom:56px;}
 table{width:100%;border-collapse:collapse;margin-top:12px;}
-thead th{position:sticky;top:0;background:#e7f4f7;border-bottom:1px solid var(--border);text-align:left;padding:8px;font-size:.9rem;}
+thead th{background:#e7f4f7;border-bottom:1px solid var(--border);text-align:left;padding:8px;font-size:.9rem;}
 tbody td{border-bottom:1px solid var(--border);padding:8px;vertical-align:top;font-size:.9rem;}
 button{background:var(--accent);color:#240E05;border:none;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;}
 .error{white-space:pre-wrap;color:#fecaca;background:#45120a;border:1px solid #8f2b10;padding:10px;border-radius:10px;display:none;}
 a, a:visited{color:var(--accent);}
 
-/* Force Montserrat globally */
+/* Global Montserrat */
 body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div, table, th, td {
   font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica, Arial, sans-serif !important;
 }
 
-/* Header bar at top */
+/* Header bar */
 .header-bar {
   display:flex;
   align-items:center;
@@ -49,12 +49,6 @@ body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div, tab
   padding:16px 24px;
   box-shadow:0 8px 20px rgba(0,0,0,.25);
   margin-bottom:16px;
-}
-.header-bar h1 {
-  font-size:1.5rem;
-  font-weight:700;
-  color:var(--accent);
-  margin:0;
 }
 .header-bar img {
   max-width:160px;
@@ -81,58 +75,59 @@ body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div, tab
   color:var(--muted);
   font-weight:600;
 }
-.footnotes-row .brand-mark{
-  max-width:160px;
-  height:auto;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,.4));
-}
 
-/* Force top-align for all table cells */
-table th, table td { vertical-align: top !important; }
-
-/* Grouped header (optional “SBoE Adopted Programs”) */
+/* Sticky header rows */
 thead tr.group-label th{
-  background: transparent !important;
-  border-bottom: 0;
-  text-align: center;
-  font-size: .8rem;
-  font-weight: 600;
-  color: var(--muted);
-  letter-spacing: .04em;
-}
-thead tr.group-label th.group-span{
-  background: #ffffff !important;
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  background: #e7f4f7 !important;
   border-bottom: 1px solid var(--border);
+  text-align:center;
+  font-size:.8rem;
+  font-weight:600;
+  color:var(--muted);
+  letter-spacing:.04em;
+}
+thead tr.columns-header th{
+  position: sticky;
+  top: var(--h1, 32px);
+  z-index: 7;
+  background: #e7f4f7;
 }
 
-/* NO-WRAP Algebra 1 / Math 1 columns */
-th[data-col="Algebra 1"],
-td[data-col="Algebra 1"],
-th[data-col="Math 1"],
-td[data-col="Math 1"] {
-  white-space: nowrap !important;
-  overflow-wrap: normal !important;
-  word-break: normal !important;
-  hyphens: none !important;
-}
-
-/* --- Sticky first column --- */
-.table-wrap { position: relative; }
+/* Sticky first column */
 table th:nth-child(1),
 table td:nth-child(1) {
   position: sticky;
   left: 0;
   z-index: 2;
-  background: var(--card); 
+  background: var(--card);
   border-right: 1px solid var(--border);
   box-shadow: 2px 0 0 rgba(0,0,0,0.04);
 }
-thead th:nth-child(1) {
-  z-index: 6;
-  background: #e7f4f7;
+thead th:nth-child(1) { z-index: 10; }
+
+/* No-wrap for Algebra 1 / Math 1 */
+th[data-col="Algebra 1"], td[data-col="Algebra 1"],
+th[data-col="Math 1"], td[data-col="Math 1"] {
+  white-space: nowrap !important;
 }
-thead tr.group-label th {
-  position: static !important;
+
+/* Bottom-right button */
+.download-fab {
+  position: absolute;
+  right: 60px;
+  top: 16px;
+  z-index: 30;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 </style>
 </head>
@@ -145,11 +140,7 @@ thead tr.group-label th {
     <img src="cemd_logo.png" alt="CEMD logo" />
   </div>
 
-  <div class="panel">
-    <button id="downloadBtn" style="color:white">Download CSV</button>
-    <div id="errorBox" class="error" style="margin-top:12px;"></div>
-  </div>
-
+  <!-- MAIN PANEL -->
   <div class="panel">
     <div class="table-wrap">
       <table id="resultsTable">
@@ -157,6 +148,11 @@ thead tr.group-label th {
         <tbody id="tableBody"></tbody>
       </table>
     </div>
+
+    <!-- bottom-right floating button -->
+    <button id="downloadBtn" class="download-fab">Download CSV</button>
+
+    <div id="errorBox" class="error" style="margin-top:12px;"></div>
   </div>
 
   <div class="footnotes">
@@ -165,7 +161,6 @@ thead tr.group-label th {
     <h4>***National edition or corresponding state edition on list</h4>
     <div class="footnotes-row">
       <h4 class="last-updated">Last Updated on 11/11/2025</h4>
-      <img src="cemd_logo.png" alt="CEMD logo" class="brand-mark" />
     </div>
   </div>
 </div>
@@ -187,25 +182,12 @@ thead tr.group-label th {
     }
   }
 
-  function stripAllQuotes(s){
-    return String(s ?? '').replace(/['"\u2018\u2019\u201C\u201D]/g, '');
-  }
-
-  function normalizeHeader(h){
-    return stripAllQuotes(String(h ?? '').replace(/^\uFEFF/, '').replace(/\s+/g,' ').trim());
-  }
-
+  function stripAllQuotes(s){ return String(s ?? '').replace(/['"\u2018\u2019\u201C\u201D]/g, ''); }
+  function normalizeHeader(h){ return stripAllQuotes(String(h ?? '').replace(/^\uFEFF/, '').replace(/\s+/g,' ').trim()); }
   function uniquify(names){
     const seen = Object.create(null);
-    return names.map((name)=>{
-      let base = name || 'col';
-      let n = base, i = 2;
-      while(seen[n]) n = `${base}_${i++}`;
-      seen[n] = true;
-      return n;
-    });
+    return names.map((name)=>{let base=name||'col';let n=base,i=2;while(seen[n])n=`${base}_${i++}`;seen[n]=true;return n;});
   }
-
   function coerceBoolish(v){
     if(v==null) return null;
     if(typeof v==='boolean') return v;
@@ -214,7 +196,6 @@ thead tr.group-label th {
     if(['false','f','no','n','0'].includes(s)) return false;
     return null;
   }
-
   function formatCell(val) {
     const b = coerceBoolish(val);
     if (b === true)
@@ -224,8 +205,8 @@ thead tr.group-label th {
     let str = escapeHTML(stripAllQuotes(String(val).trim()));
     str = str.replace(/\uFF08/g, '(').replace(/\uFF09/g, ')');
     str = str.replace(/(\b[A-Za-z][A-Za-z\/&+\-]*)\s+(\d+\b)/g, '<span class="nb">$1&nbsp;$2</span>');
-    str = str.replace(/(\b(?:cert\w*|deriv\w*))\s*\(\s*([A-Za-z])\s*\)/gi, (_m, w, L) => `<span class="nb">${w}&nbsp;(${L.toUpperCase()})</span>`);
-    str = str.replace(/(\b[^\s(]{2,})\s*\(\s*([A-Za-z0-9]{1,3})\s*\)/g, '<span class="nb">$1&nbsp;($2)</span>');
+    str = str.replace(/(\b(?:cert\w*|deriv\w*))\s*\(\s*([A-Za-z])\s*\)/gi, (_m,w,L)=>`<span class="nb">${w}&nbsp;(${L.toUpperCase()})</span>`);
+    str = str.replace(/(\b[^\s(]{2,})\s*\(\s*([A-Za-z0-9]{1,3})\s*\)/g,'<span class="nb">$1&nbsp;($2)</span>');
     return str;
   }
 
@@ -235,56 +216,53 @@ thead tr.group-label th {
       .replace(/\s+/g,' ')
       .replace(/\balgebra i\b/g,'algebra 1')
       .replace(/\bmath i\b/g,'math 1');
-
     const recSet = new Set(['k-5','6-8','algebra 1','math 1']);
     const canonCols = cols.map(canon);
-    const idxs = canonCols.map((c,i)=> recSet.has(c) ? i : -1).filter(i=>i!==-1);
-    if (!idxs.length) return;
-
-    const start = Math.min(...idxs), end = Math.max(...idxs), span = end - start + 1;
-    const trGroup = document.createElement('tr');
+    const idxs = canonCols.map((c,i)=>recSet.has(c)?i:-1).filter(i=>i!==-1);
+    if(!idxs.length) return;
+    const start=Math.min(...idxs), end=Math.max(...idxs), span=end-start+1;
+    const trGroup=document.createElement('tr');
     trGroup.classList.add('group-label');
-
-    cols.forEach((_, i) => {
-      const th = document.createElement('th');
-      if (i === start){
-        th.colSpan = span;
-        th.classList.add('group-span');
-        th.textContent = 'SBoE Adopted Programs';
-      } else if (i < start || i > end){
-        th.textContent = '';
-      }
+    cols.forEach((_,i)=>{
+      const th=document.createElement('th');
+      if(i===start){th.colSpan=span;th.classList.add('group-span');th.textContent='SBoE Adopted Programs';}
       trGroup.appendChild(th);
     });
     thead.appendChild(trGroup);
   }
 
   function renderTable(rows, cols){
-    const thead = $('tableHead');
-    const tbody = $('tableBody');
-    thead.innerHTML = '';
-    tbody.innerHTML = '';
+    const thead=$('tableHead');
+    const tbody=$('tableBody');
+    thead.innerHTML='';
+    tbody.innerHTML='';
 
     addGroupedHeaderIfNeeded(cols, thead);
 
-    const trh = document.createElement('tr');
+    const trh=document.createElement('tr');
+    trh.classList.add('columns-header');
     cols.forEach(c=>{
-      const th = document.createElement('th');
-      th.textContent = c;
-      th.setAttribute('data-col', c);
+      const th=document.createElement('th');
+      th.textContent=c;
+      th.setAttribute('data-col',c);
       trh.appendChild(th);
     });
     thead.appendChild(trh);
 
-    const frag = document.createDocumentFragment();
-    for (const r of rows){
-      const tr = document.createElement('tr');
-      for (const c of cols){
-        const td = document.createElement('td');
-        td.setAttribute('data-col', c);
-        let v = r[c];
-        if (typeof v === 'string') v = stripAllQuotes(v.trim());
-        td.innerHTML = formatCell(v);
+    // measure row 1 height so row 2 sits right below
+    const groupRow=thead.querySelector('tr.group-label');
+    const h1=groupRow?groupRow.getBoundingClientRect().height:0;
+    document.documentElement.style.setProperty('--h1', `${h1}px`);
+
+    const frag=document.createDocumentFragment();
+    for(const r of rows){
+      const tr=document.createElement('tr');
+      for(const c of cols){
+        const td=document.createElement('td');
+        td.setAttribute('data-col',c);
+        let v=r[c];
+        if(typeof v==='string') v=stripAllQuotes(v.trim());
+        td.innerHTML=formatCell(v);
         tr.appendChild(td);
       }
       frag.appendChild(tr);
@@ -293,12 +271,12 @@ thead tr.group-label th {
   }
 
   function wireDownload(){
-    const btn = $('downloadBtn');
-    if (!btn) return;
-    btn.addEventListener('click', ()=>{
-      const a = document.createElement('a');
-      a.href = CSV_URL;
-      a.download = 'CEMD_CA-Adoption-List-Explorer_2025.csv';
+    const btn=$('downloadBtn');
+    if(!btn) return;
+    btn.addEventListener('click',()=>{
+      const a=document.createElement('a');
+      a.href=CSV_URL;
+      a.download='CEMD_CA-Adoption-List-Explorer_2025.csv';
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -306,29 +284,28 @@ thead tr.group-label th {
   }
 
   fetch(CSV_URL,{cache:'no-store'})
-    .then(res=>{ if(!res.ok) throw new Error('Failed to fetch '+CSV_URL+' ('+res.status+')'); return res.text(); })
+    .then(res=>{if(!res.ok)throw new Error('Failed to fetch '+CSV_URL+' ('+res.status+')');return res.text();})
     .then(text=>{
-      const result = Papa.parse(text,{header:true,skipEmptyLines:true});
-      const rawFields = result.meta?.fields || Object.keys(result.data[0]||{});
-      const cleaned = rawFields.map(normalizeHeader);
-      const normFields = uniquify(cleaned);
-      const rows = result.data.map(row=>{
-        const o = {};
-        rawFields.forEach((orig, idx)=>{
-          const key = normFields[idx];
-          let val = row[orig];
-          if (val === '') val = null;
-          if (typeof val === 'string') val = stripAllQuotes(val.replace(/\s+/g,' ').trim());
-          o[key] = val;
+      const result=Papa.parse(text,{header:true,skipEmptyLines:true});
+      const rawFields=result.meta?.fields||Object.keys(result.data[0]||{});
+      const cleaned=rawFields.map(normalizeHeader);
+      const normFields=uniquify(cleaned);
+      const rows=result.data.map(row=>{
+        const o={};
+        rawFields.forEach((orig,idx)=>{
+          const key=normFields[idx];
+          let val=row[orig];
+          if(val==='') val=null;
+          if(typeof val==='string') val=stripAllQuotes(val.replace(/\s+/g,' ').trim());
+          o[key]=val;
         });
         return o;
       });
-      renderTable(rows, normFields);
+      renderTable(rows,normFields);
       wireDownload();
     })
     .catch(showError);
 })();
 </script>
-
 </body>
 </html>
