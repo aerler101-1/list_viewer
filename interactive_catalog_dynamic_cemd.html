@@ -53,7 +53,6 @@ body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div, tab
 .header-bar img {
   max-width:160px;
   height:auto;
-  filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));
 }
 
 /* Footnotes */
@@ -82,9 +81,8 @@ thead tr.group-label th{
   position: sticky;
   top: 0;
   z-index: 8;
-  /* Use header background so body cells don't show through */
-  background: #e7f4f7;            /* match your thead bg */
-  border: 0;                      /* no borders on the empty cells */
+  background: #e7f4f7;
+  border: 0;
   padding-top: 8px;
   padding-bottom: 8px;
   text-align: center;
@@ -96,13 +94,13 @@ thead tr.group-label th{
 
 /* Only the spanned SBoE cell gets the white pill + borders */
 thead tr.group-label th.group-span{
-  background: #ffffff !important; /* white pill over the annotated columns */
+  background: #ffffff !important;
   border-bottom: 1px solid var(--border);
   border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
-  z-index: 9;                     /* above its siblings */
+  z-index: 9;
 }
 
 /* Row 2: column headers remain sticky below row 1 */
@@ -128,7 +126,7 @@ table td:nth-child(1){
 }
 thead th:nth-child(1){ z-index: 10; }
 
-/* Sticky first column */
+/* Sticky first column (deduped but kept intentionally) */
 table th:nth-child(1),
 table td:nth-child(1) {
   position: sticky;
@@ -145,12 +143,11 @@ thead tr.group-label th:first-child,
 thead tr.columns-header th:first-child {
   position: sticky;
   left: 0;
-  z-index: 15;                   /* above other header cells */
-  background: #e7f4f7;           /* same as header bg */
+  z-index: 15;
+  background: #e7f4f7;
   border-right: 1px solid var(--border);
   box-shadow: 2px 0 0 rgba(0,0,0,0.04);
 }
-
 
 /* No-wrap for Algebra 1 / Math 1 */
 th[data-col="Algebra 1"], td[data-col="Algebra 1"],
@@ -158,7 +155,7 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
   white-space: nowrap !important;
 }
 
-/* Bottom-right button */
+/* Floating download button (kept top-left inside the frame) */
 .download-fab {
   position: absolute;
   left: 5px;
@@ -193,30 +190,37 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
       </table>
     </div>
 
-    <!-- bottom-right floating button -->
-    <button id="downloadBtn" class="download-fab">Download CSV</button>
+
+    <button id="downloadBtn" class="download-fab">Download XLSX</button>
 
     <div id="errorBox" class="error" style="margin-top:12px;"></div>
-  </div>
-
-  <div class="footnotes">
-    <h4>*Refers to the presence of state or national edition present in 2024–25 CEMD selection dataset</h4>
+	<h4>*Refers to the presence of state or national edition present in 2024–25 CEMD selection dataset</h4>
     <h4>**Review of current or previous national edition</h4>
     <h4>***National edition or corresponding state edition on list</h4>
+	<h4>† List is sorted alphabetically, by publisher</h4>
     <div class="footnotes-row">
-      <h4 class="last-updated">Last Updated on 11/11/2025</h4>
+      <h4 class="last-updated">Last Updated on 11/12/2025</h4>
     </div>
   </div>
+
+
 </div>
 
 <!-- Papa Parse -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<!-- ExcelJS for XLSX export -->
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
 <script>
 (function() {
   const CSV_URL = 'list_local_clean.csv';
+  const LOGO_URL = 'cemd_logo.png'; // same file you're showing in the header
   const $ = (id) => document.getElementById(id);
   const errorBox = $('errorBox');
+
+  // Keep a copy of the displayed data for export
+  let currentCols = [];
+  let currentRows = [];
 
   function showError(e){
     console.error(e);
@@ -281,6 +285,10 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
     thead.innerHTML='';
     tbody.innerHTML='';
 
+    // store for export
+    currentCols = cols.slice();
+    currentRows = rows.map(r => ({...r}));
+
     addGroupedHeaderIfNeeded(cols, thead);
 
     const trh=document.createElement('tr');
@@ -314,19 +322,145 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
     tbody.appendChild(frag);
   }
 
+  // ----- XLSX helpers -----
+  function colLetter(n){ // 1-based to letters
+    let s = "", x = n;
+    while (x > 0) { let m = (x - 1) % 26; s = String.fromCharCode(65 + m) + s; x = Math.floor((x - 1) / 26); }
+    return s;
+  }
+
+  function getFootnotes(){
+    const container = document.querySelector('.footnotes');
+    if(!container) return [];
+    return Array.from(container.querySelectorAll('h4')).map(h => h.textContent.trim()).filter(Boolean);
+  }
+
+  function fetchImageAsBase64(url){
+    return fetch(url, {cache:'no-store'})
+      .then(r => { if(!r.ok) throw new Error('Failed to load logo: '+r.status); return r.blob(); })
+      .then(blob => new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => {
+          const dataUrl = fr.result; // e.g., data:image/png;base64,....
+          const base64 = String(dataUrl).split(',')[1] || '';
+          resolve({ base64, mime: blob.type || 'image/png' });
+        };
+        fr.onerror = reject;
+        fr.readAsDataURL(blob);
+      }));
+  }
+
+  async function buildAndDownloadXLSX(){
+    // Guard
+    if(!currentCols.length){
+      throw new Error('No data loaded to export.');
+    }
+
+    // Create workbook / sheets
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'CEMD';
+    wb.created = new Date();
+
+    // ---------- Sheet 1: Adoption List ----------
+    const ws = wb.addWorksheet('Adoption List', { properties:{ defaultRowHeight: 18 } });
+
+    // Header row
+    ws.addRow(currentCols);
+    ws.getRow(1).font = { bold: true };
+
+    // Data rows (use raw values; booleans -> TRUE/FALSE, null -> blank)
+    for(const r of currentRows){
+      const row = currentCols.map(c => {
+        const v = r[c];
+        const b = coerceBoolish(v);
+        if (b === true) return true;
+        if (b === false) return false;
+        if (v == null) return '';
+        return v;
+      });
+      ws.addRow(row);
+    }
+
+    // Freeze header
+    ws.views = [{ state:'frozen', xSplit:0, ySplit:1 }];
+
+    // Best-effort column sizing
+    currentCols.forEach((c, i) => {
+      const col = ws.getColumn(i+1);
+      const maxLen = Math.max(
+        String(c||'').length,
+        ...currentRows.slice(0,200).map(r => String(r[c] ?? '').length)
+      );
+      col.width = Math.min(Math.max(10, Math.ceil(maxLen * 0.9)), 48);
+    });
+
+    // Insert an extra top row for placing the logo above the table, but keep the on-screen DOM unchanged
+    ws.spliceRows(1, 0, []);
+    // Re-apply header formatting now on row 2
+    ws.getRow(2).values = currentCols;
+    ws.getRow(2).font = { bold: true };
+    ws.views = [{ state:'frozen', xSplit:0, ySplit:2 }];
+
+    // Add CEMD logo in top-right
+    try {
+      const { base64, mime } = await fetchImageAsBase64(LOGO_URL);
+      const imageId = wb.addImage({ base64, extension: (mime.split('/')[1]||'png') });
+      // Anchor roughly over the last 3 columns in row 1
+      const lastCol = currentCols.length;
+      const firstColForLogo = Math.max(1, lastCol - 2);
+      ws.addImage(imageId, {
+        tl: { col: firstColForLogo - 1 + 0.2, row: 0.2 }, // zero-based
+        ext: { width: 160, height: 40 }
+      });
+      // Give the top row a little height so the logo has room
+      ws.getRow(1).height = 30;
+    } catch(e){
+      console.warn('Logo not embedded:', e);
+    }
+
+    // ---------- Sheet 2: Notes ----------
+// ---------- Sheet 2: Notes ----------
+const notes = wb.addWorksheet('Notes');
+notes.addRow(['Notes for this workbook']);
+notes.getRow(1).font = { bold: true };
+notes.addRow(['']);
+
+// Hard-coded official CEMD notes
+const officialNotes = [
+  'Refers to the presence of state or national edition present in 2024–25 CEMD selection dataset',
+  'Review of current or previous national edition',
+  'National edition or corresponding state edition on list',
+  'List is sorted alphabetically, by publisher'
+];
+
+officialNotes.forEach((t, i) => notes.addRow([`${i + 1}. ${t}`]));
+notes.columns = [{ width: 120 }];
+
+
+    // ---------- Save ----------
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'CEMD_CA-Adoption-List-Explorer_2025.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  // ----- end XLSX helpers -----
+
   function wireDownload(){
     const btn=$('downloadBtn');
     if(!btn) return;
-    btn.addEventListener('click',()=>{
-      const a=document.createElement('a');
-      a.href=CSV_URL;
-      a.download='CEMD_CA-Adoption-List-Explorer_2025.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+    btn.addEventListener('click', async ()=>{
+      try{
+        await buildAndDownloadXLSX();
+      }catch(e){ showError(e); }
     });
   }
 
+  // ----- Load + render -----
   fetch(CSV_URL,{cache:'no-store'})
     .then(res=>{if(!res.ok)throw new Error('Failed to fetch '+CSV_URL+' ('+res.status+')');return res.text();})
     .then(text=>{
