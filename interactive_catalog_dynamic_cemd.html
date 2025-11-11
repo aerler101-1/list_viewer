@@ -50,8 +50,17 @@ body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div, tab
   box-shadow:0 8px 20px rgba(0,0,0,.25);
   margin-bottom:16px;
 }
-.header-bar h1 { font-size:1.5rem; font-weight:700; color:var(--accent); margin:0; }
-.header-bar img { max-width:160px; height:auto; filter:drop-shadow(0 2px 8px rgba(0,0,0,.4)); }
+.header-bar h1 {
+  font-size:1.5rem;
+  font-weight:700;
+  color:var(--accent);
+  margin:0;
+}
+.header-bar img {
+  max-width:160px;
+  height:auto;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));
+}
 
 /* Footnotes */
 .footnotes{
@@ -106,6 +115,25 @@ td[data-col="Math 1"] {
   word-break: normal !important;
   hyphens: none !important;
 }
+
+/* --- Sticky first column --- */
+.table-wrap { position: relative; }
+table th:nth-child(1),
+table td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--card); 
+  border-right: 1px solid var(--border);
+  box-shadow: 2px 0 0 rgba(0,0,0,0.04);
+}
+thead th:nth-child(1) {
+  z-index: 6;
+  background: #e7f4f7;
+}
+thead tr.group-label th {
+  position: static !important;
+}
 </style>
 </head>
 <body>
@@ -159,22 +187,14 @@ td[data-col="Math 1"] {
     }
   }
 
-  // Remove ALL quotes (straight ' " and smart ‘ ’ “ ”)
   function stripAllQuotes(s){
     return String(s ?? '').replace(/['"\u2018\u2019\u201C\u201D]/g, '');
   }
 
-  // Strong header cleanup + quote removal
   function normalizeHeader(h){
-    return stripAllQuotes(
-      String(h ?? '')
-        .replace(/^\uFEFF/, '')       // BOM
-        .replace(/\s+/g, ' ')
-        .trim()
-    );
+    return stripAllQuotes(String(h ?? '').replace(/^\uFEFF/, '').replace(/\s+/g,' ').trim());
   }
 
-  // Ensure unique names post-normalization
   function uniquify(names){
     const seen = Object.create(null);
     return names.map((name)=>{
@@ -202,14 +222,13 @@ td[data-col="Math 1"] {
     if (b === false || val == null) return '';
     const escapeHTML = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     let str = escapeHTML(stripAllQuotes(String(val).trim()));
-    str = str.replace(/\uFF08/g, '(').replace(/\uFF09/g, ')'); // full-width → normal
+    str = str.replace(/\uFF08/g, '(').replace(/\uFF09/g, ')');
     str = str.replace(/(\b[A-Za-z][A-Za-z\/&+\-]*)\s+(\d+\b)/g, '<span class="nb">$1&nbsp;$2</span>');
     str = str.replace(/(\b(?:cert\w*|deriv\w*))\s*\(\s*([A-Za-z])\s*\)/gi, (_m, w, L) => `<span class="nb">${w}&nbsp;(${L.toUpperCase()})</span>`);
     str = str.replace(/(\b[^\s(]{2,})\s*\(\s*([A-Za-z0-9]{1,3})\s*\)/g, '<span class="nb">$1&nbsp;($2)</span>');
     return str;
   }
 
-  // Optional grouped header over K-5 / 6-8 / Algebra 1 / Math 1 if those columns exist
   function addGroupedHeaderIfNeeded(cols, thead){
     const canon = s => String(s||'').toLowerCase().trim()
       .replace(/[\u2013\u2014]/g,'-')
@@ -264,7 +283,7 @@ td[data-col="Math 1"] {
         const td = document.createElement('td');
         td.setAttribute('data-col', c);
         let v = r[c];
-        if (typeof v === 'string') v = stripAllQuotes(v.trim());  // <-- remove quotes in values
+        if (typeof v === 'string') v = stripAllQuotes(v.trim());
         td.innerHTML = formatCell(v);
         tr.appendChild(td);
       }
@@ -286,31 +305,24 @@ td[data-col="Math 1"] {
     });
   }
 
-  // Parse CSV, clean headers, remove quotes everywhere
   fetch(CSV_URL,{cache:'no-store'})
     .then(res=>{ if(!res.ok) throw new Error('Failed to fetch '+CSV_URL+' ('+res.status+')'); return res.text(); })
     .then(text=>{
       const result = Papa.parse(text,{header:true,skipEmptyLines:true});
       const rawFields = result.meta?.fields || Object.keys(result.data[0]||{});
-
-      const cleaned = rawFields.map(normalizeHeader);  // already strips quotes
+      const cleaned = rawFields.map(normalizeHeader);
       const normFields = uniquify(cleaned);
-
       const rows = result.data.map(row=>{
         const o = {};
         rawFields.forEach((orig, idx)=>{
           const key = normFields[idx];
           let val = row[orig];
           if (val === '') val = null;
-          if (typeof val === 'string') {
-            val = stripAllQuotes(val.replace(/\s+/g,' ').trim()); // <-- remove quotes in values
-          }
+          if (typeof val === 'string') val = stripAllQuotes(val.replace(/\s+/g,' ').trim());
           o[key] = val;
         });
-        if ('Adopted' in o) o['Adopted'] = null;
         return o;
       });
-
       renderTable(rows, normFields);
       wireDownload();
     })
