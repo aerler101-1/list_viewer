@@ -413,8 +413,8 @@ const officialNotes = [
   '***National edition or corresponding state edition on list',
   '†List is sorted alphabetically, by publisher',
   '',
-  '',
-  'CEMD is a central hub for the collection, distribution, and making sense of data and information about K–12 curriculum and instruction. To learn more, visit www.cemd.org.'
+  'CEMD is a central hub for the collection, distribution, and making sense of data and information about K–12 curriculum and instruction',
+  ''
 ];
 
 // Add notes without numbering
@@ -429,7 +429,7 @@ const text = cell.value;
 
 // Replace plain text URL with hyperlink
 cell.value = {
-  text: 'CEMD is a central hub for the collection, distribution, and making sense of data and information about K–12 curriculum and instruction. To learn more, visit www.cemd.org.',
+  text: 'To learn more, visit www.cemd.org.',
   hyperlink: 'https://www.cemd.org'
 };
 cell.font = { color: { argb: 'FF1A0DAB' }, underline: true };
