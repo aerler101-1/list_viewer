@@ -413,7 +413,7 @@ const officialNotes = [
   '***National edition or corresponding state edition on list',
   '†List is sorted alphabetically, by publisher',
   '',
-  'CEMD is a central hub for the collection, distribution, and making sense of data and information about K–12 curriculum and instruction',
+  'CEMD is a central hub for the collection, distribution, and making sense of data and information about K–12 curriculum and instruction.',
   ''
 ];
 
@@ -437,15 +437,36 @@ cell.font = { color: { argb: 'FF1A0DAB' }, underline: true };
 // Add logo in top-right
 try {
   const { base64, mime } = await fetchImageAsBase64(LOGO_URL);
-  const imageId = wb.addImage({ base64, extension: (mime.split('/')[1]||'png') });
-  notes.addImage(imageId, {
-    tl: { col: 1.6, row: 0.2 },
-    ext: { width: 160, height: 40 }
+  const imageId = wb.addImage({
+    base64,
+    extension: (mime.split('/')[1] || 'png')
   });
-  notes.getRow(1).height = 30;
-} catch(e){
+
+  // Define target width and height for the image
+  const width = 160;
+  const height = 40;
+
+  // --- Force B1 to expand in both directions ---
+  const targetCol = notes.getColumn(2); // Column B
+  const targetRow = notes.getRow(1);    // Row 1
+
+  // These values give B1 roughly enough space for a 160x40px image
+  targetCol.width = 25;   // ~25 chars wide ≈ 175 px
+  targetRow.height = 45;  // ~45 px high
+
+  // Optional: center text in B1 (if you have a label there)
+  targetRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+  // --- Add the image ---
+  notes.addImage(imageId, {
+    tl: { col: 1.2, row: 0.1 }, // anchor near top-left of the enlarged cell
+    ext: { width, height }
+  });
+
+} catch (e) {
   console.warn('Logo not embedded on Notes sheet:', e);
 }
+
 
 
     // ---------- Save ----------
