@@ -400,37 +400,53 @@ h5 {
     // (No logo on Sheet 1 anymore)
 
     // ---------- Sheet 2: Notes ----------
-    const notes = wb.addWorksheet('Notes');
-    notes.addRow(['Notes for this workbook']);
-    notes.getRow(1).font = { bold: true };
-    notes.addRow(['']);
+// ---------- Sheet 2: Notes ----------
+const notes = wb.addWorksheet('Notes');
+notes.addRow(['Notes for this workbook']);
+notes.getRow(1).font = { bold: true };
+notes.addRow(['']);
 
-    const officialNotes = [
-      'Last Updated on 11/12/2025',
-      '*Refers to the presence of state or national edition in 2024–25 CEMD California selection dataset',
-      '**Review of current or previous national edition',
-      '***National edition or corresponding state edition on list',
-      '†List is sorted alphabetically, by publisher',
-      '',
-      '',
-      'CEMD is a central hub for the collection, distribution, and making sense of data and information about K--12 curriculum and instruction. To learn more, visit www.cemd.org.'
-    ];
-    officialNotes.forEach((t, i) => notes.addRow([t ? `${i + 1}. ${t}` : '']));
-    notes.columns = [{ width: 120 }];
+const officialNotes = [
+  'Last Updated on 11/12/2025',
+  '*Refers to the presence of state or national edition in 2024–25 CEMD California selection dataset',
+  '**Review of current or previous national edition',
+  '***National edition or corresponding state edition on list',
+  '†List is sorted alphabetically, by publisher',
+  '',
+  '',
+  'CEMD is a central hub for the collection, distribution, and making sense of data and information about K–12 curriculum and instruction. To learn more, visit www.cemd.org.'
+];
 
-    // Add CEMD logo to Notes sheet (top-right-ish)
-    try {
-      const { base64, mime } = await fetchImageAsBase64(LOGO_URL);
-      const imageId = wb.addImage({ base64, extension: (mime.split('/')[1]||'png') });
-      // Put it near the top; adjust tl/ext to taste
-      notes.addImage(imageId, {
-        tl: { col: 1.6, row: 0.2 },   // ~Column C area visually
-        ext: { width: 160, height: 40 }
-      });
-      notes.getRow(1).height = 30;
-    } catch(e){
-      console.warn('Logo not embedded on Notes sheet:', e);
-    }
+// Add notes without numbering
+officialNotes.forEach((t) => notes.addRow([t]));
+notes.columns = [{ width: 120 }];
+
+// Make the last row’s URL clickable
+const lastRowIndex = notes.lastRow.number;
+const lastRow = notes.getRow(lastRowIndex);
+const cell = lastRow.getCell(1);
+const text = cell.value;
+
+// Replace plain text URL with hyperlink
+cell.value = {
+  text: 'CEMD is a central hub for the collection, distribution, and making sense of data and information about K–12 curriculum and instruction. To learn more, visit www.cemd.org.',
+  hyperlink: 'https://www.cemd.org'
+};
+cell.font = { color: { argb: 'FF1A0DAB' }, underline: true };
+
+// Add logo in top-right
+try {
+  const { base64, mime } = await fetchImageAsBase64(LOGO_URL);
+  const imageId = wb.addImage({ base64, extension: (mime.split('/')[1]||'png') });
+  notes.addImage(imageId, {
+    tl: { col: 1.6, row: 0.2 },
+    ext: { width: 160, height: 40 }
+  });
+  notes.getRow(1).height = 30;
+} catch(e){
+  console.warn('Logo not embedded on Notes sheet:', e);
+}
+
 
     // ---------- Save ----------
     const buf = await wb.xlsx.writeBuffer();
