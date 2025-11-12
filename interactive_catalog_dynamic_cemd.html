@@ -170,6 +170,12 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
+
+/* tighter footnote spacing */
+h5 {
+  margin: 2px 0;
+  line-height: 1.2;
+}
 </style>
 </head>
 <body>
@@ -190,19 +196,17 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
       </table>
     </div>
 
-
-    <button id="downloadBtn" class="download-fab">Download XLSX</button>
+    <button id="downloadBtn" class="download-fab">Download</button>
 
     <div id="errorBox" class="error" style="margin-top:12px;"></div>
-	<h4>*Refers to the presence of state or national edition present in 2024–25 CEMD selection dataset</h4>
-    <h4>**Review of current or previous national edition</h4>
-    <h4>***National edition or corresponding state edition on list</h4>
-	<h4>† List is sorted alphabetically, by publisher</h4>
+    <h5>*Refers to the presence of state or national edition present in 2024–25 CEMD selection dataset</h5>
+    <h5>**Review of current or previous national edition</h5>
+    <h5>***National edition or corresponding state edition on list</h5>
+    <h5>† List is sorted alphabetically, by publisher</h5>
     <div class="footnotes-row">
-      <h4 class="last-updated">Last Updated on 11/12/2025</h4>
+      <h5 class="last-updated">Last Updated on 11/12/2025</h5>
     </div>
   </div>
-
 
 </div>
 
@@ -230,11 +234,26 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
     }
   }
 
-  function stripAllQuotes(s){ return String(s ?? '').replace(/['"\u2018\u2019\u201C\u201D]/g, ''); }
-  function normalizeHeader(h){ return stripAllQuotes(String(h ?? '').replace(/^\uFEFF/, '').replace(/\s+/g,' ').trim()); }
+  // --- keep apostrophes; normalize smart quotes instead of deleting ---
+  function normalizeQuotes(s){
+    return String(s ?? '')
+      .replace(/[\u2018\u2019]/g, "'")   // smart single → '
+      .replace(/[\u201C\u201D]/g, '"');  // smart double → "
+  }
+  function normalizeHeader(h){
+    return normalizeQuotes(String(h ?? '')
+      .replace(/^\uFEFF/, '')
+      .replace(/\s+/g,' ')
+      .trim());
+  }
+
   function uniquify(names){
     const seen = Object.create(null);
-    return names.map((name)=>{let base=name||'col';let n=base,i=2;while(seen[n])n=`${base}_${i++}`;seen[n]=true;return n;});
+    return names.map((name)=>{
+      let base=name||'col';let n=base,i=2;
+      while(seen[n]) n=`${base}_${i++}`;
+      seen[n]=true;return n;
+    });
   }
   function coerceBoolish(v){
     if(v==null) return null;
@@ -250,7 +269,7 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
       return '<span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:#8a8a8a; vertical-align:middle;"></span>';
     if (b === false || val == null) return '';
     const escapeHTML = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    let str = escapeHTML(stripAllQuotes(String(val).trim()));
+    let str = escapeHTML(normalizeQuotes(String(val).trim()));
     str = str.replace(/\uFF08/g, '(').replace(/\uFF09/g, ')');
     str = str.replace(/(\b[A-Za-z][A-Za-z\/&+\-]*)\s+(\d+\b)/g, '<span class="nb">$1&nbsp;$2</span>');
     str = str.replace(/(\b(?:cert\w*|deriv\w*))\s*\(\s*([A-Za-z])\s*\)/gi, (_m,w,L)=>`<span class="nb">${w}&nbsp;(${L.toUpperCase()})</span>`);
@@ -313,7 +332,7 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
         const td=document.createElement('td');
         td.setAttribute('data-col',c);
         let v=r[c];
-        if(typeof v==='string') v=stripAllQuotes(v.trim());
+        if(typeof v==='string') v=normalizeQuotes(v.trim());
         td.innerHTML=formatCell(v);
         tr.appendChild(td);
       }
@@ -323,7 +342,7 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
   }
 
   // ----- XLSX helpers -----
-  function colLetter(n){ // 1-based to letters
+  function colLetter(n){
     let s = "", x = n;
     while (x > 0) { let m = (x - 1) % 26; s = String.fromCharCode(65 + m) + s; x = Math.floor((x - 1) / 26); }
     return s;
@@ -351,12 +370,10 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
   }
 
   async function buildAndDownloadXLSX(){
-    // Guard
     if(!currentCols.length){
       throw new Error('No data loaded to export.');
     }
 
-    // Create workbook / sheets
     const wb = new ExcelJS.Workbook();
     wb.creator = 'CEMD';
     wb.created = new Date();
@@ -364,11 +381,11 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
     // ---------- Sheet 1: Adoption List ----------
     const ws = wb.addWorksheet('Adoption List', { properties:{ defaultRowHeight: 18 } });
 
-    // Header row
+    // header row
     ws.addRow(currentCols);
     ws.getRow(1).font = { bold: true };
 
-    // Data rows (use raw values; booleans -> TRUE/FALSE, null -> blank)
+    // data rows
     for(const r of currentRows){
       const row = currentCols.map(c => {
         const v = r[c];
@@ -381,10 +398,10 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
       ws.addRow(row);
     }
 
-    // Freeze header
+    // freeze header
     ws.views = [{ state:'frozen', xSplit:0, ySplit:1 }];
 
-    // Best-effort column sizing
+    // column sizing
     currentCols.forEach((c, i) => {
       const col = ws.getColumn(i+1);
       const maxLen = Math.max(
@@ -394,48 +411,46 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
       col.width = Math.min(Math.max(10, Math.ceil(maxLen * 0.9)), 48);
     });
 
-    // Insert an extra top row for placing the logo above the table, but keep the on-screen DOM unchanged
+    // extra top row for logo
     ws.spliceRows(1, 0, []);
-    // Re-apply header formatting now on row 2
     ws.getRow(2).values = currentCols;
     ws.getRow(2).font = { bold: true };
     ws.views = [{ state:'frozen', xSplit:0, ySplit:2 }];
 
-    // Add CEMD logo in top-right
+    // embed logo
     try {
       const { base64, mime } = await fetchImageAsBase64(LOGO_URL);
       const imageId = wb.addImage({ base64, extension: (mime.split('/')[1]||'png') });
-      // Anchor roughly over the last 3 columns in row 1
       const lastCol = currentCols.length;
       const firstColForLogo = Math.max(1, lastCol - 2);
       ws.addImage(imageId, {
-        tl: { col: firstColForLogo - 1 + 0.2, row: 0.2 }, // zero-based
+        tl: { col: firstColForLogo - 1 + 0.2, row: 0.2 },
         ext: { width: 160, height: 40 }
       });
-      // Give the top row a little height so the logo has room
       ws.getRow(1).height = 30;
     } catch(e){
       console.warn('Logo not embedded:', e);
     }
 
     // ---------- Sheet 2: Notes ----------
-// ---------- Sheet 2: Notes ----------
-const notes = wb.addWorksheet('Notes');
-notes.addRow(['Notes for this workbook']);
-notes.getRow(1).font = { bold: true };
-notes.addRow(['']);
+    const notes = wb.addWorksheet('Notes');
+    notes.addRow(['Notes for this workbook']);
+    notes.getRow(1).font = { bold: true };
+    notes.addRow(['']);
 
-// Hard-coded official CEMD notes
-const officialNotes = [
-  'Refers to the presence of state or national edition present in 2024–25 CEMD selection dataset',
-  'Review of current or previous national edition',
-  'National edition or corresponding state edition on list',
-  'List is sorted alphabetically, by publisher'
-];
+    const officialNotes = [
+      'Last Updated on 11/12/2025',
+      'Refers to the presence of state or national edition in 2024–25 CEMD California selection dataset',
+      'Review of current or previous national edition',
+      'National edition or corresponding state edition on list',
+      'List is sorted alphabetically, by publisher',
+      '',
+      '',
+      'Emma thoughts'
+    ];
 
-officialNotes.forEach((t, i) => notes.addRow([`${i + 1}. ${t}`]));
-notes.columns = [{ width: 120 }];
-
+    officialNotes.forEach((t, i) => notes.addRow([t ? `${i + 1}. ${t}` : '']));
+    notes.columns = [{ width: 120 }];
 
     // ---------- Save ----------
     const buf = await wb.xlsx.writeBuffer();
@@ -474,7 +489,7 @@ notes.columns = [{ width: 120 }];
           const key=normFields[idx];
           let val=row[orig];
           if(val==='') val=null;
-          if(typeof val==='string') val=stripAllQuotes(val.replace(/\s+/g,' ').trim());
+          if(typeof val==='string') val=normalizeQuotes(val.replace(/\s+/g,' ').trim());
           o[key]=val;
         });
         return o;
