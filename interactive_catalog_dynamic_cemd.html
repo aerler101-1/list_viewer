@@ -38,6 +38,11 @@ body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div, tab
   font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica, Arial, sans-serif !important;
 }
 
+
+thead th {
+  vertical-align: top;     /* default is middle */
+}
+
 /* Header bar */
 .header-bar {
   display:flex;
@@ -76,7 +81,6 @@ body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, div, tab
 }
 
 /* Sticky header rows */
-/* Row 1: SBoE group header */
 thead tr.group-label th{
   position: sticky;
   top: 0;
@@ -91,8 +95,6 @@ thead tr.group-label th{
   color: var(--muted);
   letter-spacing: .04em;
 }
-
-/* Only the spanned SBoE cell gets the white pill + borders */
 thead tr.group-label th.group-span{
   background: #ffffff !important;
   border-bottom: 1px solid var(--border);
@@ -102,19 +104,13 @@ thead tr.group-label th.group-span{
   border-top-right-radius: 8px;
   z-index: 9;
 }
-
-/* Row 2: column headers remain sticky below row 1 */
 thead tr.columns-header th{
   position: sticky;
   top: var(--h1, 32px);
   z-index: 7;
   background: #e7f4f7;
 }
-
-/* First column layering stays correct */
 thead th:nth-child(1){ z-index: 10; }
-
-/* First column remains sticky and layers correctly */
 table th:nth-child(1),
 table td:nth-child(1){
   position: sticky;
@@ -125,8 +121,6 @@ table td:nth-child(1){
   box-shadow: 2px 0 0 rgba(0,0,0,0.04);
 }
 thead th:nth-child(1){ z-index: 10; }
-
-/* Sticky first column (deduped but kept intentionally) */
 table th:nth-child(1),
 table td:nth-child(1) {
   position: sticky;
@@ -137,8 +131,6 @@ table td:nth-child(1) {
   box-shadow: 2px 0 0 rgba(0,0,0,0.04);
 }
 thead th:nth-child(1) { z-index: 10; }
-
-/* Make the first cell of BOTH sticky header rows stick to the left, too */
 thead tr.group-label th:first-child,
 thead tr.columns-header th:first-child {
   position: sticky;
@@ -155,7 +147,7 @@ th[data-col="Math 1"], td[data-col="Math 1"] {
   white-space: nowrap !important;
 }
 
-/* Floating download button (kept top-left inside the frame) */
+/* Floating download button */
 .download-fab {
   position: absolute;
   left: 5px;
@@ -199,7 +191,7 @@ h5 {
     <button id="downloadBtn" class="download-fab">Download</button>
 
     <div id="errorBox" class="error" style="margin-top:12px;"></div>
-    <h5>*Refers to the presence of state or national edition present in 2024–25 CEMD selection dataset</h5>
+    <h5>*Refers to the presence of state or national edition in 2024–25 CEMD California selection dataset</h5>
     <h5>**Review of current or previous national edition</h5>
     <h5>***National edition or corresponding state edition on list</h5>
     <h5>† List is sorted alphabetically, by publisher</h5>
@@ -218,7 +210,7 @@ h5 {
 <script>
 (function() {
   const CSV_URL = 'list_local_clean.csv';
-  const LOGO_URL = 'cemd_logo.png'; // same file you're showing in the header
+  const LOGO_URL = 'cemd_logo.png'; // will be placed on Notes sheet
   const $ = (id) => document.getElementById(id);
   const errorBox = $('errorBox');
 
@@ -237,8 +229,8 @@ h5 {
   // --- keep apostrophes; normalize smart quotes instead of deleting ---
   function normalizeQuotes(s){
     return String(s ?? '')
-      .replace(/[\u2018\u2019]/g, "'")   // smart single → '
-      .replace(/[\u201C\u201D]/g, '"');  // smart double → "
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"');
   }
   function normalizeHeader(h){
     return normalizeQuotes(String(h ?? '')
@@ -342,12 +334,6 @@ h5 {
   }
 
   // ----- XLSX helpers -----
-  function colLetter(n){
-    let s = "", x = n;
-    while (x > 0) { let m = (x - 1) % 26; s = String.fromCharCode(65 + m) + s; x = Math.floor((x - 1) / 26); }
-    return s;
-  }
-
   function getFootnotes(){
     const container = document.querySelector('.footnotes');
     if(!container) return [];
@@ -360,7 +346,7 @@ h5 {
       .then(blob => new Promise((resolve, reject) => {
         const fr = new FileReader();
         fr.onload = () => {
-          const dataUrl = fr.result; // e.g., data:image/png;base64,....
+          const dataUrl = fr.result;
           const base64 = String(dataUrl).split(',')[1] || '';
           resolve({ base64, mime: blob.type || 'image/png' });
         };
@@ -411,26 +397,7 @@ h5 {
       col.width = Math.min(Math.max(10, Math.ceil(maxLen * 0.9)), 48);
     });
 
-    // extra top row for logo
-    ws.spliceRows(1, 0, []);
-    ws.getRow(2).values = currentCols;
-    ws.getRow(2).font = { bold: true };
-    ws.views = [{ state:'frozen', xSplit:0, ySplit:2 }];
-
-    // embed logo
-    try {
-      const { base64, mime } = await fetchImageAsBase64(LOGO_URL);
-      const imageId = wb.addImage({ base64, extension: (mime.split('/')[1]||'png') });
-      const lastCol = currentCols.length;
-      const firstColForLogo = Math.max(1, lastCol - 2);
-      ws.addImage(imageId, {
-        tl: { col: firstColForLogo - 1 + 0.2, row: 0.2 },
-        ext: { width: 160, height: 40 }
-      });
-      ws.getRow(1).height = 30;
-    } catch(e){
-      console.warn('Logo not embedded:', e);
-    }
+    // (No logo on Sheet 1 anymore)
 
     // ---------- Sheet 2: Notes ----------
     const notes = wb.addWorksheet('Notes');
@@ -440,17 +407,30 @@ h5 {
 
     const officialNotes = [
       'Last Updated on 11/12/2025',
-      'Refers to the presence of state or national edition in 2024–25 CEMD California selection dataset',
-      'Review of current or previous national edition',
-      'National edition or corresponding state edition on list',
-      'List is sorted alphabetically, by publisher',
+      '*Refers to the presence of state or national edition in 2024–25 CEMD California selection dataset',
+      '**Review of current or previous national edition',
+      '***National edition or corresponding state edition on list',
+      '†List is sorted alphabetically, by publisher',
       '',
       '',
       'Emma thoughts'
     ];
-
     officialNotes.forEach((t, i) => notes.addRow([t ? `${i + 1}. ${t}` : '']));
     notes.columns = [{ width: 120 }];
+
+    // Add CEMD logo to Notes sheet (top-right-ish)
+    try {
+      const { base64, mime } = await fetchImageAsBase64(LOGO_URL);
+      const imageId = wb.addImage({ base64, extension: (mime.split('/')[1]||'png') });
+      // Put it near the top; adjust tl/ext to taste
+      notes.addImage(imageId, {
+        tl: { col: 1.6, row: 0.2 },   // ~Column C area visually
+        ext: { width: 160, height: 40 }
+      });
+      notes.getRow(1).height = 30;
+    } catch(e){
+      console.warn('Logo not embedded on Notes sheet:', e);
+    }
 
     // ---------- Save ----------
     const buf = await wb.xlsx.writeBuffer();
